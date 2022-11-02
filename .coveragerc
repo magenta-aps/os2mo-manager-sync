@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
+# SPDX-License-Identifier: MPL-2.0
+
+# Settings for coverage of tests
+[run]
+omit =
+    # omit all files in test_data when calculation coverage
+    /tests/test_data/*

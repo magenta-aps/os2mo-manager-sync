@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from typing import Any
-
+import click
+import structlog
 from fastapi.encoders import jsonable_encoder
 from gql import gql  # type: ignore
-from raclients.graph.client import PersistentGraphQLClient  # type: ignore
+from raclients.graph.client import GraphQLClient  # type: ignore
+
+logger = structlog.get_logger()
 
 """org-unit name, uuid of org-unit."""
-leder_org_units = [
+manager_org_units = [
     (
         "Kloakering",
         "cf4daae1-4812-41f1-8c47-63a99e26aadf",
@@ -103,7 +105,7 @@ CREATE_MANAGER = gql(
 """
 )
 
-CREATE_LEDER_ORG_UNIT = gql(
+CREATE_MANAGER_ORG_UNIT = gql(
     """
     mutation (
         $name: String!
@@ -129,7 +131,30 @@ CREATE_LEDER_ORG_UNIT = gql(
 )
 
 
-async def create_leder_ou(input: tuple, gql_client: PersistentGraphQLClient) -> Any:
+def construct_client(client_secret: str) -> GraphQLClient:
+    """Construct clients froms settings.
+
+    Args:
+        settings: Integration settings module.
+
+    Returns:
+        PersistentGraphQLClient.
+    """
+    gql_client = GraphQLClient(
+        url="http://localhost:5000/graphql/v2",
+        client_id="dipex",
+        client_secret=client_secret,
+        auth_server="http://localhost:5000/auth",
+        auth_realm="mo",
+        execute_timeout=120,
+        httpx_client_kwargs={"timeout": 120},
+    )
+    logger.info("Created graphql client")
+
+    return gql_client
+
+
+def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> dict:
     """Create new sub org-units with name as parent + '_leder '"""
     name = input[0] + "_leder"
     parent = input[1]  # UUID
@@ -141,24 +166,37 @@ async def create_leder_ou(input: tuple, gql_client: PersistentGraphQLClient) -> 
         "org_unit_type": org_unit_type,
         "from": from_date,
     }
-    org_unit_uuid: dict = await gql_client.execute(
-        CREATE_LEDER_ORG_UNIT, variable_values=jsonable_encoder(data)
+
+    org_unit_uuid: dict = gql_client.execute(
+        CREATE_MANAGER_ORG_UNIT, variable_values=jsonable_encoder(data)
     )
     return org_unit_uuid
 
 
-async def create_managers(input: tuple, gql_client: PersistentGraphQLClient) -> None:
+def create_managers(input: tuple, gql_client: GraphQLClient) -> None:
     """Write managers to the newly created '_leder' org-units."""
     data = input[0]
     data["org_unit"] = input[1]["org_unit_create"]["uuid"]
     data["from"] = "2022-08-01"
-    _ = await gql_client.execute(CREATE_MANAGER, variable_values=jsonable_encoder(data))
+    _ = gql_client.execute(CREATE_MANAGER, variable_values=jsonable_encoder(data))
 
 
-async def inject_data(gql_client: PersistentGraphQLClient) -> None:
+@click.command()
+@click.argument("client_password")
+def inject_data(client_password: str) -> None:
+    click.echo("Will probably inject test data now ...")
+
+    gql_client = construct_client(client_password)
+
     org_unit_uuids = [
-        await create_leder_ou(input=ou, gql_client=gql_client) for ou in leder_org_units
+        create_manager_ou(input=ou, gql_client=gql_client) for ou in manager_org_units
     ]
     input = list(zip(employees, org_unit_uuids))
     for ou in input:
-        await create_managers(ou, gql_client=gql_client)
+        create_managers(ou, gql_client)  # type: ignore
+
+    click.echo("Test data injected!")
+
+
+if __name__ == "__main__":
+    inject_data()

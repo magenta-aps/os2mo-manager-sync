@@ -17,7 +17,7 @@ variables:
   RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mo-sd-to-mo-manager-update
 
   PYTEST_COV_MODULE: sd_managerscript
-  PYTEST_COV_FAIL_UNDER: 30
+  PYTEST_COV_FAIL_UNDER: 80
 
   PRECOMMIT_USE_POETRY: "true"
 

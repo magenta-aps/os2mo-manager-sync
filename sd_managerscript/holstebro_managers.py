@@ -1,25 +1,27 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-# from typing import Any
-from typing import Any
+from uuid import UUID
 
 import structlog
+from fastapi.encoders import jsonable_encoder
 from gql import gql  # type: ignore
+from more_itertools import collapse
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
+from .models import OrgUnitManagers
+from .util import query_graphql
+from .util import query_org_unit
+
 logger = structlog.get_logger()
 
-KOMMUNE = "Kolding Kommune"
 ORG_UNITS = "org_units"
 
 QUERY_ORG = gql("query {org { uuid }}")
 
 QUERY_ROOT_ORG_UNIT = gql(
-    """query ($user_keys: [String!]!) {org_units (user_keys: $user_keys) {uuid}}"""
+    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {uuid}}"""
 )
-
-# QUERY_ORG_UNITS = gql("query($uuid: [UUID!]!){org_units (uuids: $uuid){uuid}}")
 
 QUERY_ORG_UNITS = gql(
     """
@@ -41,6 +43,10 @@ QUERY_ORG_UNITS = gql(
                         name
                         uuid
                     }
+                    validity{
+                        to
+                        from
+                    }
                 }
             }
         }
@@ -49,50 +55,56 @@ QUERY_ORG_UNITS = gql(
 )
 
 
-async def query_graphql(
-    gql_client: PersistentGraphQLClient, query: str, variables: dict
-) -> Any:
-    """Graphql query. Returns List[Dict]"""
+async def get_manager_org_units(
+    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID
+) -> list[OrgUnitManagers]:
+    """
+    Recursive function, traverse through all org_units and return '_leder' org-units
+
+    Args:
+        Graphql client
+        org_unit_uuid: UUID
+    Returns:
+        managers: list of '_leder' OrgUnitManagers
 
     """
-    query: str - String for grapqhql query.
-    variables: str - Input formatted as json.
 
-    Returns: List[Dict] - List of alle the objects returned by the query.
-    """
-    return await gql_client.execute(query, variable_values=variables)
+    variables = {"uuid": str(org_unit_uuid)}
 
+    data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
 
-async def traverse_org_units(
-    gql_client: PersistentGraphQLClient, input_org_unit: dict
-) -> list[dict] | None:
-    """Traverse through all org_units under passed UUID"""
+    child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
-    root_uuid = {"uuid": one(input_org_unit["objects"])["uuid"]}
-
-    data = await query_graphql(gql_client, QUERY_ORG_UNITS, root_uuid)
-    leder_org_units = []
-    next_org_units = list(
-        filter(lambda ou: one(ou["objects"])["child_count"] > 0, data["org_units"])
-    )
-    leder_org_units += list(
+    manager_list = list(
         filter(
-            lambda ou: one(ou["objects"])["name"].lower().strip()[-6:] == "_leder",
-            data["org_units"],
+            lambda ou: jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder",
+            data,
         )
     )
-    leder_org_units += [
-        await traverse_org_units(gql_client, org_unit) for org_unit in next_org_units
+    # TODO: Fix MyPy error:
+    # "List comprehension has incompatible type List[List[OrgUnitManagers]];
+    # expected List[OrgUnitManagers]"
+    manager_list += [
+        await get_manager_org_units(  # type: ignore
+            gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
+        )
+        for org_unit in child_org_units
     ]
-    return leder_org_units
+
+    managers = list(collapse(manager_list, base_type=OrgUnitManagers))
+
+    return managers
 
 
-async def update_mo_managers(gql_client: PersistentGraphQLClient) -> None:
+async def update_mo_managers(
+    gql_client: PersistentGraphQLClient, root_uuid: UUID
+) -> None:
+    """Main function for finding and updating managers"""
 
     logger.msg("Getting org-units...")
-    variables = {"user_keys": KOMMUNE}
+    variables = {"uuids": str(root_uuid)}
     root_org_unit = await query_graphql(gql_client, QUERY_ROOT_ORG_UNIT, variables)
-    root_org_unit["objects"] = list(root_org_unit.pop("org_units"))
+    root_org_unit_uuid = UUID(one(root_org_unit["org_units"])["uuid"])
 
-    # Return value removed to avoid MyPy and Flake8 error
-    _ = await traverse_org_units(gql_client, root_org_unit)
+    managers = await get_manager_org_units(gql_client, root_org_unit_uuid)
+    print(f"**************************** MANAGERS {managers}")

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from functools import cache
 from typing import Any
+from uuid import UUID
 
 import structlog
 from pydantic import AnyHttpUrl
@@ -9,8 +10,6 @@ from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import parse_obj_as
 from pydantic import SecretStr
-
-# from ramqp.config import ConnectionSettings
 
 logger = structlog.get_logger()
 
@@ -29,6 +28,7 @@ class Settings(BaseSettings):
         description="Base URL for OIDC server (Keycloak).",
     )
     auth_realm: str = Field("mo", description="Realm to authenticate against")
+    root_uuid: UUID = Field(description="UUID of the root org-unit")
 
 
 @cache

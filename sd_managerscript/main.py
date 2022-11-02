@@ -12,7 +12,7 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
-from .inject_test_data import inject_data
+
 
 logger = structlog.get_logger()
 
@@ -60,7 +60,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
 
             gql_client = construct_client(settings)
             context["gql_client"] = await stack.enter_async_context(gql_client)
-
+            context["root_uuid"] = settings.root_uuid
             yield
 
     app.router.lifespan_context = lifespan
@@ -73,12 +73,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     async def run_update() -> None:
         """Starts update process of managers"""
         gql_client = context["gql_client"]
-        await update_mo_managers(gql_client=gql_client)
-
-    # Only used to inject test data on local instance. NOT for prod
-    @app.post("/trigger/test_data", status_code=202)
-    async def inject_test_data() -> None:
-        gql_client = context["gql_client"]
-        await inject_data(gql_client)
+        root_uuid = context["root_uuid"]
+        await update_mo_managers(gql_client=gql_client, root_uuid=root_uuid)
 
     return app

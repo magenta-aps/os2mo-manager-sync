@@ -27,6 +27,10 @@ pre-commit = "^2.20.0"
 pylint-pydantic = "^0.1.4"
 pylint = "^2.15.5"
 
+[tool.poetry.group.dev.dependencies]
+pytest-split = "^0.8.0"
+pytest-cov = "^4.0.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

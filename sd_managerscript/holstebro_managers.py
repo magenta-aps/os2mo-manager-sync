@@ -233,11 +233,21 @@ async def get_active_engagements(
         return EngagementFrom.parse_obj(
             {"employee_uuid": employee_uuid, "engagement_from": engagement_from}
         )
+    )
 
     return EngagementFrom.parse_obj(
         {"employee_uuid": employee_uuid, "engagement_from": None}
     )
 
+    if any(managers):
+        print(f"++++++++++++++++++ managers {managers}")
+        # We check there's max one employee with the latest from date or we raise an exception
+        date_list = [datetime.fromisoformat(man["eng_from"]) for man in managers]
+        if date_list.count(max(date_list)) > 1:
+            raise Exception(
+                "Two or more employees have same engagement from"
+                f"date, in org-unit with uuid: {org_unit_dict['uuid']}"
+            )
 
 async def filter_managers(
     gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers

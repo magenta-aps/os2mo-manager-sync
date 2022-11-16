@@ -19,7 +19,7 @@ RUN python -m venv $POETRY_HOME \
 # Install project in another isolated environment
 WORKDIR /opt
 RUN python -m venv $VIRTUAL_ENV
-COPY inject_data.sh poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-root --only=main
 
 WORKDIR /opt/app

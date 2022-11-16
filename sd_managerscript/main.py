@@ -11,6 +11,8 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
 from .config import get_settings
 from .config import Settings
+from .holstebro_managers import update_mo_managers  # type: ignore
+
 
 logger = structlog.get_logger()
 
@@ -58,7 +60,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
 
             gql_client = construct_client(settings)
             context["gql_client"] = await stack.enter_async_context(gql_client)
-
+            context["root_uuid"] = settings.root_uuid
             yield
 
     app.router.lifespan_context = lifespan
@@ -66,5 +68,12 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     @app.get("/")
     async def index() -> dict[str, str]:
         return {"Integration": "SD Managersync"}
+
+    @app.post("/trigger/all", status_code=202)
+    async def run_update() -> None:
+        """Starts update process of managers"""
+        gql_client = context["gql_client"]
+        root_uuid = context["root_uuid"]
+        await update_mo_managers(gql_client=gql_client, root_uuid=root_uuid)
 
     return app

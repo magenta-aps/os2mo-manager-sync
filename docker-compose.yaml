@@ -22,6 +22,7 @@ services:
       MO_URL: "http://mo"
       CLIENT_ID: "dipex"
       CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      ROOT_UUID: "f06ee470-9f17-566f-acbe-e938112d46d9"
 
     networks:
       - os2mo_default

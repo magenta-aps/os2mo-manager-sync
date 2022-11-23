@@ -15,6 +15,7 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .exceptions import ConflictingManagers
 from .models import EngagementFrom
 from .models import OrgUnitManagers
+from .util import ConflictingManagers
 from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit

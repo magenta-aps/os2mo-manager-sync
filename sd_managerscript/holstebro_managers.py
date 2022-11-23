@@ -233,7 +233,6 @@ async def get_active_engagements(
         return EngagementFrom.parse_obj(
             {"employee_uuid": employee_uuid, "engagement_from": engagement_from}
         )
-    )
 
     return EngagementFrom.parse_obj(
         {"employee_uuid": employee_uuid, "engagement_from": None}

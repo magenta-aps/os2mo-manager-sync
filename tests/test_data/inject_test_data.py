@@ -8,6 +8,7 @@ from raclients.graph.client import GraphQLClient  # type: ignore
 
 logger = structlog.get_logger()
 
+
 """org-unit name, uuid of org-unit."""
 manager_org_units = [
     (
@@ -185,7 +186,6 @@ def create_managers(input: tuple, gql_client: GraphQLClient) -> None:
 @click.argument("client_password")
 def inject_data(client_password: str) -> None:
     click.echo("Will probably inject test data now ...")
-
     gql_client = construct_client(client_password)
 
     org_unit_uuids = [

@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -57,3 +58,8 @@ class OrgUnitManagers(BaseModel):
     parent_uuid: UUID = Field(description="Reference to the parent organisation unit.")
     child_count: int = Field(description="Number of child org-units.")
     managers: list[Manager] = Field(description="Manager object.")
+
+
+class EngagementFrom(BaseModel):
+    employee_uuid: UUID = Field(description="UUID of the related employee.")
+    engagement_from: datetime | None = Field(description="Engagement from date.")

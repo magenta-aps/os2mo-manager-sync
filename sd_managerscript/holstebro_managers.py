@@ -3,6 +3,7 @@
 from asyncio import gather
 from datetime import datetime
 from datetime import timedelta
+from functools import partial
 from uuid import UUID
 
 import structlog
@@ -320,6 +321,65 @@ async def filter_managers(
     return OrgUnitManagers.parse_obj(org_unit_dict)
 
 
+async def get_current_manager(
+    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID
+) -> UUID | None:
+    """
+    Checks if org-unit has a manager and returns UUID of that manager posistion,
+    otherwise returns new uuid.
+
+    Args:
+        gql_client: GraphQL client
+        org_unit_uuid: UUID - uuid og the org-unit we want to fetch the manager from.
+    Retuns:
+        UUID or None - UUID if manager position is present otherwise None
+    """
+    variables = {"uuid": str(org_unit_uuid)}
+    ou_manager = await query_graphql(gql_client, CURRENT_MANAGER, variables)
+    managers = one(one(ou_manager["org_units"])["objects"])["managers"]
+    if managers:
+        return UUID(one(managers)["uuid"])
+    return None
+
+
+async def update_manager(
+    gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
+) -> None:
+    """
+    Checks if there exists a manager posistion at parent org-unit.
+    If theres does. Updates the manager posistion with employee
+    If there doesn't: Creates new manager position with employee
+
+    Assign manager to parent org_unit
+
+    Args:
+        gql_client: GraphQL client
+        org_unit: OrgUnitManagers object -
+    Returns:
+        Nothing
+    """
+
+    ou_uuid = jsonable_encoder(org_unit)["parent_uuid"]
+    manager_dict = one(jsonable_encoder(org_unit)["managers"])
+
+    # Spicy renaming of keys as ManagerRead model differs from ManagerWrite models
+    manager_dict["person"] = manager_dict.pop("employee_uuid")
+    manager_dict["manager_type"] = manager_dict["manager_type"]["uuid"]
+    manager_dict["manager_level"] = manager_dict["manager_level"]["uuid"]
+
+    current_manager_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
+    if current_manager_uuid:
+        manager_dict["uuid"] = current_manager_uuid
+        variables = {"input": manager_dict}
+        await execute_mutator(gql_client, UPDATE_MANAGER, variables)
+    else:
+        del manager_dict[
+            "uuid"
+        ]  # As we create a new manager object, a new UUID will be genereated
+        variables = {"input": manager_dict}
+        await execute_mutator(gql_client, CREATE_MANAGER, variables)
+
+
 async def update_mo_managers(
     gql_client: PersistentGraphQLClient, root_uuid: UUID
 ) -> None:
@@ -334,7 +394,4 @@ async def update_mo_managers(
     org_units = [
         await filter_managers(gql_client, org_unit) for org_unit in manager_org_units
     ]
-
-    print(
-        org_units
-    )  # just to avoid MyPy errors. Will be replaced with call to function in next MR
+    map(partial(update_manager, gql_client), org_units)

@@ -1,10 +1,12 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from collections.abc import Collection
 from collections.abc import Iterable
 from datetime import datetime
 from uuid import UUID
 
 from dateutil.tz import tzoffset  # type: ignore
+from gql import gql  # type: ignore
 from ramodels.mo._shared import Validity  # type: ignore
 
 from sd_managerscript.models import Manager
@@ -922,6 +924,102 @@ filter_managers_terminate = (
     ],
 )
 
+updata_manager_data = [
+    (  # Test update manager
+        OrgUnitManagers(
+            uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+            name="Social og sundhed_leder",
+            parent_uuid=UUID("a6773531-6c0a-4c7b-b0e2-77992412b610"),
+            child_count=0,
+            managers=[
+                Manager(
+                    uuid=UUID("a8ff5cb0-8a59-4614-a41c-453df25007cc"),
+                    employee_uuid=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
+                    manager_level=ManagerLevel(
+                        uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38"),
+                        name="Niveau 2",
+                    ),
+                    manager_type=ManagerType(
+                        uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8"),
+                        name="Områdeleder",
+                    ),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
+        gql(
+            """
+        mutation UpdateManager($input: ManagerUpdateInput!) {
+            manager_update(input: $input) {
+                uuid
+            }
+        }
+    """
+        ),
+        "585675fe-8e2a-43a1-b0d9-7879a669c347",
+        {
+            "input": {
+                "uuid": "585675fe-8e2a-43a1-b0d9-7879a669c347",
+                "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
+                "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
+                "validity": {"from": "2022-08-01T00:00:00+02:00", "to": None},
+                "person": "03ff3b1a-a16b-4ea6-b372-065a77f849cb",
+            }
+        },
+    ),
+    (  # Test create manager
+        OrgUnitManagers(
+            uuid=UUID("60370b40-a143-40c5-aaa1-638b3b74d119"),
+            name="Social Indsats_LEDER",
+            parent_uuid=UUID("535ba446-d618-4e51-8dae-821d63e26560"),
+            child_count=3,
+            managers=[
+                Manager(
+                    uuid=UUID("8250d35b-fab6-4c9e-95ab-da52848f9df9"),
+                    employee_uuid=UUID("0790ca9c-f3ae-4e4b-b936-03b8aedf5314"),
+                    manager_level=ManagerLevel(
+                        uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38"),
+                        name="Niveau 2",
+                    ),
+                    manager_type=ManagerType(
+                        uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8"),
+                        name="Områdeleder",
+                    ),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
+        gql(
+            """
+        mutation CreateManager($input: ManagerCreateInput!) {
+            manager_create(input: $input) {
+                uuid
+            }
+        }
+    """
+        ),
+        None,
+        {
+            "input": {
+                "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
+                "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
+                "validity": {"from": "2022-08-01T00:00:00+02:00", "to": None},
+                "person": "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
+            }
+        },
+    ),
+]
+
 
 def get_sample_data() -> tuple[list[list[OrgUnitManagers]], list[OrgUnitManagers]]:
     """Sample data for unit test of fetching '_leder' org-units."""
@@ -957,3 +1055,9 @@ def get_filter_managers_error_data() -> tuple[OrgUnitManagers, list[dict]]:
 
 def get_filter_managers_terminate() -> tuple[OrgUnitManagers, list[dict]]:
     return filter_managers_terminate
+
+
+def get_update_managers_data() -> list[
+    tuple[OrgUnitManagers, gql, str | None, dict[str, dict[str, Collection[str]]]]
+]:
+    return updata_manager_data

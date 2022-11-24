@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic import Field
 from ramodels.mo._shared import Validity  # type: ignore
+from ramodels.mo.details.association import Association  # type: ignore
 
 """
 Genereally there seems to be some issues with consistency among the different OS2MO repos.
@@ -57,7 +58,7 @@ class OrgUnitManagers(BaseModel):
     name: str = Field(description="Name of the created organisation unit.")
     parent_uuid: UUID = Field(description="Reference to the parent organisation unit.")
     child_count: int = Field(description="Number of child org-units.")
-    managers: list[Manager] = Field(description="Manager object.")
+    managers: list[Association] = Field(description="Association object.")
 
 
 class EngagementFrom(BaseModel):

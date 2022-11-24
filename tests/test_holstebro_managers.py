@@ -15,6 +15,7 @@ from more_itertools import one
 
 from sd_managerscript.holstebro_managers import filter_managers
 from sd_managerscript.holstebro_managers import get_active_engagements
+from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import terminate_association
 from sd_managerscript.models import EngagementFrom
@@ -24,6 +25,7 @@ from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
 from tests.test_data.sample_test_data import get_sample_data
+from tests.test_data.sample_test_data import get_update_managers_data
 
 QUERY_ORG_UNITS = gql(
     """
@@ -204,3 +206,66 @@ async def test_terminate_association(
 
     mock_query_graphql.assert_called_once_with(gql_client, asso_query, query_input)
     mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input)
+
+
+@patch("sd_managerscript.holstebro_managers.query_graphql")
+async def test_get_current_manager_uuid(
+    mock_query_graphql: MagicMock,
+    gql_client: MagicMock,
+) -> None:
+    """Test "get_current_manager" returns correct values"""
+
+    ou_uuid = "3e702dd1-4103-4116-bb2d-b150aebe807d"
+    manager_uuid = "27935dbb-c173-4116-a4b5-75022315749d"
+
+    return_dict: dict = {
+        "org_units": [{"objects": [{"managers": [{"uuid": manager_uuid}]}]}]
+    }
+
+    mock_query_graphql.return_value = return_dict
+    returned_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
+
+    assert returned_uuid == UUID(manager_uuid)
+
+
+@patch("sd_managerscript.holstebro_managers.query_graphql")
+async def test_get_current_manager_none(
+    mock_query_graphql: MagicMock,
+    gql_client: MagicMock,
+) -> None:
+    """Test "get_current_manager" returns correct values"""
+
+    ou_uuid = "27935dbb-c173-4116-a4b5-75022315749d"
+
+    return_dict: dict = {"org_units": [{"objects": [{"managers": []}]}]}
+
+    mock_query_graphql.return_value = return_dict
+    returned_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
+
+    assert returned_uuid is None
+
+
+@pytest.mark.parametrize(
+    "org_unit, query, current_manager_uuid, variables", get_update_managers_data()
+)
+@patch("sd_managerscript.holstebro_managers.execute_mutator")
+@patch("sd_managerscript.holstebro_managers.get_current_manager")
+async def test_update_manager(
+    mock_get_current_manager: MagicMock,
+    mock_execute_mutator: AsyncMock,
+    gql_client: MagicMock,
+    org_unit: OrgUnitManagers,
+    query: str,
+    current_manager_uuid: str,
+    variables: dict,
+) -> None:
+    """Test update_manager can update and create new manager object"""
+
+    uuid = one(jsonable_encoder(org_unit)["managers"])["uuid"]
+
+    mock_get_current_manager.return_value = current_manager_uuid
+    mock_execute_mutator.return_value = uuid
+
+    await update_manager(gql_client, org_unit)
+
+    mock_execute_mutator.assert_called_once_with(gql_client, query, variables)

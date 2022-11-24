@@ -13,6 +13,14 @@ QUERY_ROOT_ORG_UNIT = gql(
     """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {uuid}}"""
 )
 
+MUTATOR_TERMINATE_MANAGER_BY_UUID = gql(
+    """mutation ($input: ManagerTerminateInput!){
+            manager_terminate(input: $input){
+                uuid
+            }
+        }"""
+)
+
 
 async def test_query_graphql() -> None:
     gql_client = AsyncMock()
@@ -37,3 +45,13 @@ async def test_query_org_unit(mock_query_gql: AsyncMock) -> None:
     returned_org_units = await query_org_unit(gql_client, query, variables)
 
     assert returned_org_units == expected_org_units
+
+
+async def test_execute_mutator() -> None:
+    gql_client = AsyncMock()
+    query = MUTATOR_TERMINATE_MANAGER_BY_UUID
+    variables = {"uuid": "08eaf849-e9f9-53e0-b6b9-3cd45763ecbb", "to": "2022-10-12"}
+
+    await query_graphql(gql_client, query, variables)
+
+    gql_client.execute.assert_called_once_with(query, variable_values=variables)

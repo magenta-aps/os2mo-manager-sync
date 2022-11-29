@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import click
+import argparse
+from functools import partial
+
 import structlog
 from fastapi.encoders import jsonable_encoder
 from gql import gql  # type: ignore
@@ -37,68 +39,62 @@ manager_org_units = [
     ),
 ]
 
-"""Person_uuid, Resonsibility_uuid, manager_level_uuid, manager_type_uuid."""
-employees = [
-    {
-        "person": "00973369-2d8f-4120-bbaf-75f0e0f38534",
-        "responsibility": "2f4f5cbc-35bd-4ee1-a220-5778036a15cd",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
-    {
-        "person": "03ff3b1a-a16b-4ea6-b372-065a77f849cb",
-        "responsibility": "36601c9a-561c-4372-a43f-2a15bf27ef0c",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
-    {
-        "person": "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
-        "responsibility": "2f4f5cbc-35bd-4ee1-a220-5778036a15cd",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
-    {
-        "person": "07d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
-        "responsibility": "2f4f5cbc-35bd-4ee1-a220-5778036a15cd",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
-    {
-        "person": "08c31328-17aa-48c2-8293-3fc6f59ebe9c",
-        "responsibility": "36601c9a-561c-4372-a43f-2a15bf27ef0c",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
-    {
-        "person": "0b5936f2-328d-448e-bfb9-d655e6d3d849",
-        "responsibility": "36601c9a-561c-4372-a43f-2a15bf27ef0c",
-        "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
-        "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
-    },
+"""org-unit name, uuid of org-unit."""
+redundant_org_units = [
+    (
+        "Kloakering",
+        "cf4daae1-4812-41f1-8c47-63a99e26aadf",
+    ),
+    (
+        "Almind skole",
+        "bc876b6c-3682-5b60-804b-95ff759b5509",
+    ),
+]
+
+"""org-unit name, uuid of org-unit."""
+led_adm_org_units = [
+    (
+        "Hejls skole",
+        "48fa5e8a-5a47-5df3-a10b-292ed181e054",
+    ),
+    (
+        "Byudvikling",
+        "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+    ),
 ]
 
 
-CREATE_MANAGER = gql(
+"""Person_uuid, Resonsibility_uuid, manager_level_uuid, manager_type_uuid."""
+employees = [
+    (
+        "00973369-2d8f-4120-bbaf-75f0e0f38534",
+        "03ff3b1a-a16b-4ea6-b372-065a77f849cb",
+    ),
+    (
+        "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
+        "07d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
+    ),
+    (
+        "08c31328-17aa-48c2-8293-3fc6f59ebe9c",
+        "0b5936f2-328d-448e-bfb9-d655e6d3d849",
+    ),
+    (
+        "1c571f8f-0e3e-4ffa-9ff0-d35505781924",
+        "1caf4616-f22d-4989-8492-d3c5024ef4e8",
+    ),
+    (
+        "1d64f753-5506-4de1-8125-87a2ec04ecc9",
+        "1e96bf0b-bcfe-4703-a604-2e829b5a7663",
+    ),
+    ("bff25bde-a300-43b6-a070-778a60f59a7d", "c0814647-ae83-4c43-9ff2-ccc42dfd429c"),
+]
+
+
+CREATE_ASSOCIATION = gql(
     """
-    mutation (
-        $person: UUID!,
-        $responsibility: [UUID!]!
-        $org_unit: UUID!
-        $manager_level: UUID!
-        $manager_type: UUID!
-        $from: DateTime!
-    )
+    mutation ($input: AssociationCreateInput!)
     {
-        manager_create (
-            input: {
-                person: $person
-                responsibility: $responsibility
-                org_unit: $org_unit
-                manager_level: $manager_level
-                manager_type: $manager_type
-                validity: {from: $from}
-            }
-        )
+        association_create (input: $input)
         {
             uuid
         }
@@ -131,6 +127,28 @@ CREATE_MANAGER_ORG_UNIT = gql(
 """
 )
 
+UPDATE_ORG_UNIT = gql(
+    """
+    mutation (
+        $name: String!
+        $uuid: UUID!
+        $from: DateTime!
+    )
+    {
+        org_unit_update (
+            input: {
+                name: $name
+                uuid: $uuid
+                validity: {from: $from}
+            }
+        )
+        {
+            uuid
+        }
+    }
+    """
+)
+
 
 def construct_client(client_secret: str) -> GraphQLClient:
     """Construct clients froms settings.
@@ -155,7 +173,7 @@ def construct_client(client_secret: str) -> GraphQLClient:
     return gql_client
 
 
-def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> dict:
+def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> str:
     """Create new sub org-units with name as parent + '_leder '"""
     name = input[0] + "_leder"
     parent = input[1]  # UUID
@@ -168,35 +186,88 @@ def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> dict:
         "from": from_date,
     }
 
-    org_unit_uuid: dict = gql_client.execute(
+    org_unit = gql_client.execute(
         CREATE_MANAGER_ORG_UNIT, variable_values=jsonable_encoder(data)
     )
-    return org_unit_uuid
+
+    return org_unit["org_unit_create"]["uuid"]  # type: ignore
 
 
-def create_managers(input: tuple, gql_client: GraphQLClient) -> None:
-    """Write managers to the newly created '_leder' org-units."""
-    data = input[0]
-    data["org_unit"] = input[1]["org_unit_create"]["uuid"]
-    data["from"] = "2022-08-01"
-    _ = gql_client.execute(CREATE_MANAGER, variable_values=jsonable_encoder(data))
+def create_led_adm_org_units(gql_client: GraphQLClient, input: tuple) -> None:
+    """Update selected org-units name with '_led-adm'"""
+
+    name = input[0] + "_led-adm"
+    uuid = input[1]  # UUID
+    org_unit_type = "9d2ac723-d5e5-4e7f-9c7f-b207bd223bc2"
+    from_date = "2022-07-15"
+    data = {
+        "name": name,
+        "uuid": uuid,
+        "org_unit_type": org_unit_type,
+        "from": from_date,
+    }
+
+    gql_client.execute(UPDATE_ORG_UNIT, variable_values=jsonable_encoder(data))
 
 
-@click.command()
-@click.argument("client_password")
+def create_redundant_ou(gql_client: GraphQLClient, input: tuple) -> None:
+    """Create new sub org-units with name as parent + prepend "Ø_" and append '_leder '"""
+    name = "Ø_" + input[0] + "_leder"
+    parent = input[1]  # UUID
+    org_unit_type = "9d2ac723-d5e5-4e7f-9c7f-b207bd223bc2"
+    from_date = "2022-06-20"
+    data = {
+        "name": name,
+        "parent": parent,
+        "org_unit_type": org_unit_type,
+        "from": from_date,
+    }
+
+    gql_client.execute(CREATE_MANAGER_ORG_UNIT, variable_values=jsonable_encoder(data))
+
+
+def create_assocications(
+    gql_client: GraphQLClient, org_unit_uuid: str, employee_uuid: str
+) -> None:
+    """Write associations to the newly created '_leder' org-units."""
+
+    variables = {
+        "input": {
+            "org_unit": org_unit_uuid,
+            "employee": employee_uuid,
+            "association_type": "75fee2b6-f405-4c77-b62e-32421c2e43d5",
+            "validity": {
+                "from": "2022-08-05",
+                "to": None,
+            },
+        }
+    }
+
+    gql_client.execute(CREATE_ASSOCIATION, variable_values=variables)
+
+
 def inject_data(client_password: str) -> None:
-    click.echo("Will probably inject test data now ...")
+    logger.info("Will probably inject test data now ...")
     gql_client = construct_client(client_password)
 
     org_unit_uuids = [
         create_manager_ou(input=ou, gql_client=gql_client) for ou in manager_org_units
     ]
-    input = list(zip(employees, org_unit_uuids))
-    for ou in input:
-        create_managers(ou, gql_client)  # type: ignore
 
-    click.echo("Test data injected!")
+    for org_unit_uuid, emp in zip(org_unit_uuids, employees):
+        for employee in emp:
+            create_assocications(gql_client, org_unit_uuid, employee)
+
+    map(partial(create_led_adm_org_units, gql_client), led_adm_org_units)
+
+    for org_unit_tuple in redundant_org_units:
+        create_redundant_ou(gql_client, org_unit_tuple)
+
+    logger.info("Test data injected!")
 
 
 if __name__ == "__main__":
-    inject_data()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("password", type=str)
+    args = parser.parse_args()
+    inject_data(args.password)

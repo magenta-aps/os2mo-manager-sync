@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from functools import partial
 from uuid import UUID
+from uuid import uuid4
 
 import structlog
 from fastapi.encoders import jsonable_encoder
@@ -15,11 +16,12 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
 from .exceptions import ConflictingManagers
 from .models import EngagementFrom
+from .models import Manager
 from .models import OrgUnitManagers
-from .util import ConflictingManagers
 from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit
+from sd_managerscript.managerlevel import get_managerlevel_mapping
 
 logger = structlog.get_logger()
 
@@ -38,23 +40,20 @@ QUERY_ORG_UNITS = gql(
             objects {
                 uuid
                 name
-                parent_uuid
                 child_count
-                managers {
+                associations {
                     uuid
                     employee_uuid
-                    manager_level {
-                        name
-                        uuid
-                    }
-                    manager_type {
-                        name
-                        uuid
-                    }
                     validity{
-                        to
                         from
+                        to
                     }
+                }
+                parent{
+                    uuid
+                    name
+                    parent_uuid
+                    org_unit_level_uuid
                 }
             }
         }
@@ -158,15 +157,17 @@ async def get_manager_org_units(
 
     variables = {"uuid": str(org_unit_uuid)}
     data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
+    logger.debug("Org-units returned from query", response=data)
     child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
     manager_list = list(
         filter(
-            lambda ou: jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder",
+            lambda ou: (jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder")
+            and (jsonable_encoder(ou)["name"].strip()[:2] != "Ø_"),
             data,
         )
     )
-
+    logger.debug("Manager list up until now...", org_units=manager_list)
     manager_list += [
         await get_manager_org_units(  # type: ignore
             gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
@@ -178,22 +179,17 @@ async def get_manager_org_units(
 
 
 async def terminate_association(
-    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, employee_uuid: UUID
+    gql_client: PersistentGraphQLClient, association_uuid: UUID
 ) -> None:
     """
     Terminates association with "_leder" org_unit (updates end date).
 
     Args:
         gql_client: GraphQL client
-        org_unit_uuid: UUID of the org_unit related to the association
-        employee_uuid: UUID of the employee related to the association
+        association_uuid: UUID of the association to terminate
     Returns:
         Nothing
     """
-
-    query_input = {"input": {"employees": employee_uuid, "org_units": org_unit_uuid}}
-
-    association_uuid = await query_graphql(gql_client, ASSOCIATION_QUERY, query_input)
 
     input = {
         "input": {
@@ -203,6 +199,7 @@ async def terminate_association(
     }
 
     await execute_mutator(gql_client, ASSOCIATION_TERMINATE, input)
+    logger.info("Association terminated!", input=input)
 
 
 async def get_active_engagements(
@@ -221,6 +218,7 @@ async def get_active_engagements(
 
     variables = {"uuid": employee_uuid}
     engagements = await query_graphql(gql_client, QUERY_ENGAGEMENTS, variables)
+    logger.debug("Engagements fetched.", response=engagements)
 
     if engagements["engagements"]:
         latest_engagement = max(
@@ -230,7 +228,7 @@ async def get_active_engagements(
             ),
         )
 
-        # We add from date for lateste engagement to compare with other potential managers
+        # We add "from date" for lateste engagement to compare with other potential managers
         engagement_from = one(latest_engagement["objects"])["validity"]["from"]
         return EngagementFrom.parse_obj(
             {"employee_uuid": employee_uuid, "engagement_from": engagement_from}
@@ -240,15 +238,6 @@ async def get_active_engagements(
         {"employee_uuid": employee_uuid, "engagement_from": None}
     )
 
-    if any(managers):
-        print(f"++++++++++++++++++ managers {managers}")
-        # We check there's max one employee with the latest from date or we raise an exception
-        date_list = [datetime.fromisoformat(man["eng_from"]) for man in managers]
-        if date_list.count(max(date_list)) > 1:
-            raise Exception(
-                "Two or more employees have same engagement from"
-                f"date, in org-unit with uuid: {org_unit_dict['uuid']}"
-            )
 
 async def filter_managers(
     gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
@@ -271,24 +260,19 @@ async def filter_managers(
 
     active_engagements = await gather(
         *map(
-            lambda manager: get_active_engagements(
-                gql_client, manager["employee_uuid"]
+            lambda association: get_active_engagements(
+                gql_client, association["employee"]
             ),
-            org_unit_dict["managers"],
+            org_unit_dict["associations"],
         )
     )
 
-    # If manager doesn't have an engagement: associations with org-unit gets terminated.
-    filtered_engagements = []
-    for engagement in active_engagements:
-        if not engagement["engagement_from"]:
-            await terminate_association(
-                gql_client, org_unit_dict["uuid"], engagement["employee_uuid"]
-            )
-        else:
-            filtered_engagements.append(engagement)
+    # Filter away non-active engagements.
+    filtered_engagements = [
+        engagement for engagement in active_engagements if engagement["engagement_from"]
+    ]
 
-    # Get manager with latests engagement from date.
+    # If any managers with engagements. -Get manager with latests engagement from date.
     if filtered_engagements:
         # We check there's max one employee with the latest from date or we raise an exception
         date_list = [
@@ -305,18 +289,40 @@ async def filter_managers(
             filtered_engagements,
             key=lambda eng_dict: datetime.fromisoformat(eng_dict["engagement_from"]),
         )
-        managers = list(
+        associations = list(
             filter(
-                lambda manager: manager["employee_uuid"]
+                lambda association: association["employee"]
                 == filtered_manager["employee_uuid"],
-                org_unit_dict["managers"],
+                org_unit_dict["associations"],
             )
         )
 
+        redundant_associations = [
+            UUID(asso["uuid"])
+            for asso in org_unit_dict["associations"]
+            if asso["uuid"] != one(associations)["uuid"]
+        ]
+        logger.debug(
+            "Associations collected.",
+            associations=associations,
+            redundant_associations=redundant_associations,
+        )
     else:
-        managers = []
+        associations = []
+        redundant_associations = [
+            UUID(asso["uuid"]) for asso in org_unit_dict["associations"]
+        ]
+        logger.debug(
+            "No associations collected.", redundant_associations=redundant_associations
+        )
+    # Terminate associations for all other employees in the
+    # "_leder" org-unit, apart from the selected manager.
+    [
+        await terminate_association(gql_client, association_uuid)  # type: ignore
+        for association_uuid in redundant_associations
+    ]
 
-    org_unit_dict["managers"] = managers
+    org_unit_dict["associations"] = associations
 
     return OrgUnitManagers.parse_obj(org_unit_dict)
 
@@ -338,12 +344,69 @@ async def get_current_manager(
     ou_manager = await query_graphql(gql_client, CURRENT_MANAGER, variables)
     managers = one(one(ou_manager["org_units"])["objects"])["managers"]
     if managers:
+        logger.debug("Manager found", manager=managers)
         return UUID(one(managers)["uuid"])
+
     return None
 
 
-async def update_manager(
+async def create_manager_object(
     gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
+) -> Manager:
+    """
+    Create Manager object for updating and creating managers
+
+    Args:
+        gql_client: GraphQL client
+        org_unit: OrgUnitManagers object
+    Returns:
+        Manager object
+    """
+
+    managertype_dict = get_managerlevel_mapping()
+
+    org_unit_dict = jsonable_encoder(org_unit)
+
+    manager_dict: dict[str, str | UUID | dict] = {}
+    manager_dict["uuid"] = uuid4()
+    manager_dict["employee"] = one(org_unit_dict["associations"])["employee"]
+
+    # UUID for managertype "Leder" which is the same for every manager
+    manager_dict["manager_type"] = {
+        "uuid": UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5")
+    }
+    manager_dict["validity"] = {
+        "from": one(org_unit_dict["associations"])["validity"]["from"],
+        "to": None,
+    }
+
+    # Assign manager level accordingly to "NYx" org_unit_level_uuid
+    # If parent org-unit name is ending with "led-adm"
+    # we fetch org_unit_level_uuid form parent org-unit
+    if org_unit_dict["parent"]["name"].strip()[-7:] == "led-adm":
+        variables = {"uuid": str(org_unit_dict["uuid"])}
+        data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
+
+        manager_dict["manager_level"] = {
+            "uuid": UUID(
+                managertype_dict[
+                    jsonable_encoder(data)["parent"]["org_unit_level_uuid"]
+                ]
+            )
+        }
+
+    else:
+        manager_dict["manager_level"] = {
+            "uuid": UUID(
+                managertype_dict[org_unit_dict["parent"]["org_unit_level_uuid"]]
+            )
+        }
+    logger.info(f"Manager object created: {manager_dict}")
+    return Manager.parse_obj(manager_dict)
+
+
+async def update_manager_object(
+    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, manager_obj: Manager
 ) -> None:
     """
     Checks if there exists a manager posistion at parent org-unit.
@@ -354,44 +417,63 @@ async def update_manager(
 
     Args:
         gql_client: GraphQL client
-        org_unit: OrgUnitManagers object -
+        org_unit_uuid: uuid of the org-unit we want to assign the manager to
     Returns:
         Nothing
     """
+    manager_dict = jsonable_encoder(manager_obj)
 
-    ou_uuid = jsonable_encoder(org_unit)["parent_uuid"]
-    manager_dict = one(jsonable_encoder(org_unit)["managers"])
+    current_manager_uuid = await get_current_manager(gql_client, org_unit_uuid)
 
-    # Spicy renaming of keys as ManagerRead model differs from ManagerWrite models
-    manager_dict["person"] = manager_dict.pop("employee_uuid")
-    manager_dict["manager_type"] = manager_dict["manager_type"]["uuid"]
-    manager_dict["manager_level"] = manager_dict["manager_level"]["uuid"]
-
-    current_manager_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
     if current_manager_uuid:
         manager_dict["uuid"] = current_manager_uuid
         variables = {"input": manager_dict}
         await execute_mutator(gql_client, UPDATE_MANAGER, variables)
+        logger.info(f"Manager updated: {manager_dict}")
     else:
-        del manager_dict[
-            "uuid"
-        ]  # As we create a new manager object, a new UUID will be genereated
         variables = {"input": manager_dict}
         await execute_mutator(gql_client, CREATE_MANAGER, variables)
+        logger.info(f"Manager created: {manager_dict}")
+
+
+async def update_manager(
+    gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
+) -> None:
+    """
+    Create manager payload and send request to update manager in relevant org-units
+
+    Args:
+        gql_client: GraphQL client
+        org_unit: OrgUnitManagers object
+    Returns:
+        Nothing
+    """
+    manager: Manager = await create_manager_object(gql_client, org_unit)
+    await update_manager_object(gql_client, org_unit.parent.uuid, manager)
+
+    # If parent org-unit has "led-adm" in name,
+    # it's parent org-unit will also have the manager assigned
+    if org_unit.parent.name.strip()[-7:] == "led-adm":
+        await update_manager_object(gql_client, org_unit.parent.parent_uuid, manager)
 
 
 async def update_mo_managers(
     gql_client: PersistentGraphQLClient, root_uuid: UUID
 ) -> None:
-    """Main function for finding and updating managers"""
+    """Main function for selecting and updating managers"""
 
-    logger.msg("Getting org-units...")
+    logger.msg("Getting root-org...")
     variables = {"uuids": str(root_uuid)}
     root_org_unit = await query_graphql(gql_client, QUERY_ROOT_ORG_UNIT, variables)
     root_org_unit_uuid = UUID(one(root_org_unit["org_units"])["uuid"])
+
+    logger.msg("Getting org-units...")
     manager_org_units = await get_manager_org_units(gql_client, root_org_unit_uuid)
 
+    logger.info("Filter Managers")
     org_units = [
         await filter_managers(gql_client, org_unit) for org_unit in manager_org_units
     ]
+    logger.info("Updating Managers")
     map(partial(update_manager, gql_client), org_units)
+    logger.info("Updating managers complete!")

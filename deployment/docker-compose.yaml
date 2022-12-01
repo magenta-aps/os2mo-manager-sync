@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: Magenta ApS
+#
+# SPDX-License-Identifier: MPL-2.0
+
+version: "3.10"
+services:
+  sd_managerscript:
+    image: magentaaps/os2mo-manager-sync:dev
+    environment:
+      AUTH_SERVER: "http://keycloak:8080/auth"
+      MO_URL: "http://mo"
+      CLIENT_ID: "dipex"
+      CLIENT_SECRET: ""
+      ROOT_UUID: "f06ee470-9f17-566f-acbe-e938112d46d9"
+    networks:
+      - os2molan
+    ports:
+      - "8000:8000"
+networks:
+  os2molan:
+    external: true

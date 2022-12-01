@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from pydantic import Field
 from ramodels.mo._shared import Validity  # type: ignore
 
-# from ramodels.mo.details.association import Association  # type: ignore
+from .config import get_settings  # type: ignore
+
 
 """
 Genereally there seems to be some issues with consistency among the different OS2MO repos.
@@ -33,31 +34,27 @@ class ManagerLevel(BaseModel):
     """Managerlevel"""
 
     uuid: UUID = Field(description="UUID og the managerlevel.")
-    # name: str = Field(description="Name of the managerlevel.")
 
 
 class ManagerType(BaseModel):
     """Managertype"""
 
     uuid: UUID = Field(description="UUID og the managertype.")
-    # name: str = Field(description="Name of the managertype.")
 
 
 class Manager(BaseModel):
     """Manager model"""
 
-    uuid: UUID = Field(description="UUID og the manager.")
     employee: UUID = Field(description="UUID of the related employee.")
     manager_level: ManagerLevel = Field(description="Manager level object.")
     manager_type: ManagerType = Field(
         description="Manager type object. Same for all managers"
     )
-    responsibility: UUID = Field(
-        UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+    validity: Validity = Field(description="From date and to date for manager role.")
+    uuid: UUID | None = Field(description="UUID og the manager.")
+    responsibility: UUID | None = Field(
+        get_settings().responsibility_uuid,
         description="Responsibilities. Uses default for all managers",
-    )
-    validity: Validity | None = Field(
-        description="From date and to date for manager role."
     )
 
 

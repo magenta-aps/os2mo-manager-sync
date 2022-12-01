@@ -8,10 +8,6 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .models import OrgUnitManagers  # type: ignore
 
 
-class ConflictingManagers(Exception):
-    pass
-
-
 @no_type_check
 async def query_graphql(
     gql_client: PersistentGraphQLClient, query: str, variables: dict

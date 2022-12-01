@@ -897,6 +897,53 @@ updata_manager_data = [
 
 create_manager_sample = [
     (
+        UUID("8315443f-a918-4eea-9605-150472418101"),
+        datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+        ManagerLevel(
+            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+        ),
+        Manager(
+            uuid=None,
+            employee=UUID("8315443f-a918-4eea-9605-150472418101"),
+            responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            manager_level=ManagerLevel(
+                uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+            ),
+            manager_type=ManagerType(
+                uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
+            ),
+            validity=Validity(
+                to_date=None,
+                from_date="2022-08-01T00:00:00+02:00",
+            ),
+        ),
+    ),
+    (
+        UUID("8315443f-a918-4eea-9605-150472418101"),
+        datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+        ManagerLevel(
+            uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
+        ),
+        Manager(
+            uuid=None,
+            employee=UUID("8315443f-a918-4eea-9605-150472418101"),
+            responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            manager_level=ManagerLevel(
+                uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
+            ),
+            manager_type=ManagerType(
+                uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
+            ),
+            validity=Validity(
+                to_date=None,
+                from_date="2022-08-01T00:00:00+02:00",
+            ),
+        ),
+    ),
+]
+
+get_manager_lvl_sample = [
+    (
         OrgUnitManagers(
             uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
             name="Social og sundhed_leder",
@@ -923,20 +970,8 @@ create_manager_sample = [
             ],
         ),
         None,
-        Manager(
-            uuid=UUID("27935dbb-c173-4116-a4b5-75022315749d"),
-            employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-            responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
-            manager_level=ManagerLevel(
-                uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-            ),
-            manager_type=ManagerType(
-                uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
-            ),
-            validity=Validity(
-                to_date=None,
-                from_date="2022-08-01T00:00:00+02:00",
-            ),
+        ManagerLevel(
+            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
         ),
     ),
     (
@@ -988,20 +1023,8 @@ create_manager_sample = [
                 )
             ],
         ),
-        Manager(
-            uuid=UUID("27935dbb-c173-4116-a4b5-75022315749d"),
-            employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-            responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
-            manager_level=ManagerLevel(
-                uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
-            ),
-            manager_type=ManagerType(
-                uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
-            ),
-            validity=Validity(
-                to_date=None,
-                from_date="2022-08-01T00:00:00+02:00",
-            ),
+        ManagerLevel(
+            uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
         ),
     ),
 ]
@@ -1041,7 +1064,11 @@ def get_update_managers_data() -> list[
     return updata_manager_data
 
 
-def get_create_manager_data() -> list[
-    tuple[OrgUnitManagers, OrgUnitManagers | None, Manager]
-]:
+def get_create_manager_data() -> list[tuple[UUID, datetime, ManagerLevel, Manager]]:
     return create_manager_sample
+
+
+def get_manager_level_data() -> list[
+    tuple[OrgUnitManagers, OrgUnitManagers | None, ManagerLevel]
+]:
+    return get_manager_lvl_sample

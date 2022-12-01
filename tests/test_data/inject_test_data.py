@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import argparse
-from functools import partial
-
+import click
 import structlog
 from fastapi.encoders import jsonable_encoder
 from gql import gql  # type: ignore
@@ -246,8 +244,10 @@ def create_assocications(
     gql_client.execute(CREATE_ASSOCIATION, variable_values=variables)
 
 
+@click.command()
+@click.argument("client_password")
 def inject_data(client_password: str) -> None:
-    logger.info("Will probably inject test data now ...")
+    click.echo("Will probably inject test data now ...")
     gql_client = construct_client(client_password)
 
     org_unit_uuids = [
@@ -258,16 +258,14 @@ def inject_data(client_password: str) -> None:
         for employee in emp:
             create_assocications(gql_client, org_unit_uuid, employee)
 
-    map(partial(create_led_adm_org_units, gql_client), led_adm_org_units)
+    for org_unit in led_adm_org_units:
+        create_led_adm_org_units(gql_client, org_unit)
 
     for org_unit_tuple in redundant_org_units:
         create_redundant_ou(gql_client, org_unit_tuple)
 
-    logger.info("Test data injected!")
+    click.echo("Test data injected!")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("password", type=str)
-    args = parser.parse_args()
-    inject_data(args.password)
+    inject_data()

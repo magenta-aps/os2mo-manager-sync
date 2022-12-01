@@ -17,19 +17,23 @@ from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import filter_managers
 from sd_managerscript.holstebro_managers import get_active_engagements
 from sd_managerscript.holstebro_managers import get_current_manager
+from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import terminate_association
-from sd_managerscript.holstebro_managers import update_manager_object
+from sd_managerscript.holstebro_managers import update_manager
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
+from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
+from tests.test_data.sample_test_data import get_manager_level_data
 from tests.test_data.sample_test_data import get_sample_data
 from tests.test_data.sample_test_data import get_update_managers_data
+
 
 QUERY_ORG_UNITS = gql(
     """
@@ -242,30 +246,44 @@ async def test_update_manager_object(
 
     mock_get_current_manager.return_value = current_manager_uuid
 
-    await update_manager_object(gql_client, org_unit_uuid, manager)
+    await update_manager(gql_client, org_unit_uuid, manager)
 
     mock_execute_mutator.assert_called_once_with(gql_client, query, variables)
 
 
 @pytest.mark.parametrize(
-    "org_unit, parent_org_unit, expected_manager", get_create_manager_data()
+    "employee_uuid, from_date, manager_level, expected_manager",
+    get_create_manager_data(),
 )
-@patch("sd_managerscript.holstebro_managers.query_org_unit")
-@patch("sd_managerscript.holstebro_managers.uuid4")
 async def test_create_manager_object(
-    mock_uuid4: MagicMock,
-    mock_query_org_unit: AsyncMock,
-    gql_client: MagicMock,
-    org_unit: OrgUnitManagers,
-    parent_org_unit: OrgUnitManagers,
+    employee_uuid: UUID,
+    from_date: datetime,
+    manager_level: ManagerLevel,
     expected_manager: Manager,
 ) -> None:
     """Test creation of Manager object based on OrgUnitManagers object"""
 
-    mock_uuid4.return_value = UUID("27935dbb-c173-4116-a4b5-75022315749d")
+    returned_manager = await create_manager_object(
+        employee_uuid, from_date, manager_level
+    )
+
+    assert returned_manager == expected_manager
+
+
+@pytest.mark.parametrize(
+    "org_unit, parent_org_unit, expected_manager_lvl", get_manager_level_data()
+)
+@patch("sd_managerscript.holstebro_managers.query_org_unit")
+async def test_get_manager_level(
+    mock_query_org_unit: AsyncMock,
+    org_unit: OrgUnitManagers,
+    parent_org_unit: OrgUnitManagers,
+    expected_manager_lvl: ManagerLevel,
+) -> None:
+    """Test getting correct org-unit level uuid"""
 
     mock_query_org_unit.return_value = parent_org_unit
 
-    returned_manager = await create_manager_object(gql_client, org_unit)
+    returned_manager_lvl = await get_manager_level(gql_client, org_unit)
 
-    assert returned_manager == expected_manager
+    assert returned_manager_lvl == expected_manager_lvl

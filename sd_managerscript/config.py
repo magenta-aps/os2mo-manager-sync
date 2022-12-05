@@ -29,6 +29,16 @@ class Settings(BaseSettings):
     )
     auth_realm: str = Field("mo", description="Realm to authenticate against")
     root_uuid: UUID = Field(description="UUID of the root org-unit")
+    manager_type_uuid: UUID = Field(
+        description="UUID defining manager type. Same for all managers"
+    )
+    responsibility_uuid: UUID = Field(
+        description="UUID defining responsibility. Same for all managers"
+    )
+    # manager_level_mapping: list of dict used as Pydantic doesn't accept dict types
+    manager_level_mapping: list = Field(
+        description="Mapping dict from org-unit level to manager level"
+    )
 
 
 @cache

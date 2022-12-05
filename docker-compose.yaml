@@ -23,6 +23,9 @@ services:
       CLIENT_ID: "dipex"
       CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
       ROOT_UUID: "f06ee470-9f17-566f-acbe-e938112d46d9"
+      MANAGER_TYPE: "75fee2b6-f405-4c77-b62e-32421c2e43d5"
+      RESPONSIBILITY: "d82039a5-f2d5-48e4-8eab-8c9f7694e16f"
+      MANAGER_LEVEL_MAPPING: '[{ "1ec3d3ae-8ad6-f689-57a9-7441f6ffca05": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c", "891603db-cc28-6ed2-6d48-25e14d3f142f": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0", "0263522a-2c1e-9c80-1880-92c1b97cfead": "a8754726-a4b9-1715-6b41-769c6fe703c5", "fc968d00-41f2-3efb-401a-30a3cf854227": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2", "750e734e-17b8-0174-6787-a5be55adca31": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2", "3ee6f4a5-02cc-41a0-82cc-4b8243664423": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2", }]'
 
     networks:
       - os2mo_default

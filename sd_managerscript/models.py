@@ -7,6 +7,9 @@ from pydantic import BaseModel
 from pydantic import Field
 from ramodels.mo._shared import Validity  # type: ignore
 
+from .config import get_settings  # type: ignore
+
+
 """
 Genereally there seems to be some issues with consistency among the different OS2MO repos.
 Eg.: In OS2MO (main) ManagerLevel and ManagerType objects has a name and UUID field, among others.
@@ -17,30 +20,51 @@ to just an UUID while it also uses the name for details objects containing UUID,
 """
 
 
+class Association(BaseModel):
+    """Model representing an association creation."""
+
+    uuid: UUID = Field(description="UUID of association.")
+    org_unit: UUID = Field(description="UUID of the org-unit.")
+    employee: UUID = Field(description="UUID of the related employee.")
+    association_type: UUID = Field(description="UUID of the association type.")
+    validity: Validity = Field(description="Validity range for the org-unit.")
+
+
 class ManagerLevel(BaseModel):
     """Managerlevel"""
 
     uuid: UUID = Field(description="UUID og the managerlevel.")
-    name: str = Field(description="Name of the managerlevel.")
 
 
 class ManagerType(BaseModel):
     """Managertype"""
 
     uuid: UUID = Field(description="UUID og the managertype.")
-    name: str = Field(description="Name of the managertype.")
 
 
 class Manager(BaseModel):
     """Manager model"""
 
-    uuid: UUID = Field(description="UUID og the manager.")
-    employee_uuid: UUID = Field(description="UUID of the related employee.")
+    employee: UUID = Field(description="UUID of the related employee.")
     manager_level: ManagerLevel = Field(description="Manager level object.")
-    manager_type: ManagerType = Field(description="Manager type object.")
-    validity: Validity | None = Field(
-        description="From date and to date for manager role."
+    manager_type: ManagerType = Field(
+        description="Manager type object. Same for all managers"
     )
+    validity: Validity = Field(description="From date and to date for manager role.")
+    uuid: UUID | None = Field(description="UUID og the manager.")
+    responsibility: UUID | None = Field(
+        get_settings().responsibility_uuid,
+        description="Responsibilities. Uses default for all managers",
+    )
+
+
+class Parent(BaseModel):
+    uuid: UUID = Field(description="UUID of the parent org-unit.")
+    name: str = Field(description="Name of the parent organisation unit.")
+    parent_uuid: UUID = Field(
+        description="UUID of the parents-parent organisation unit."
+    )
+    org_unit_level_uuid: UUID = Field(description="UUID of the parent org-unit level.")
 
 
 class OrgUnitManagers(BaseModel):
@@ -48,16 +72,16 @@ class OrgUnitManagers(BaseModel):
     Organisation unit with managers
 
     We made our own Pydantic model as we combined the org-unit model
-    with Manager model and also omitted some fields not neccessary for
+    with Association model and also omitted some fields not neccessary for
     this integration.
 
     """
 
-    uuid: UUID = Field(description="UUID og the org-unit.")
+    uuid: UUID = Field(description="UUID of the org-unit.")
     name: str = Field(description="Name of the created organisation unit.")
-    parent_uuid: UUID = Field(description="Reference to the parent organisation unit.")
     child_count: int = Field(description="Number of child org-units.")
-    managers: list[Manager] = Field(description="Manager object.")
+    associations: list[Association] = Field(description="Association object.")
+    parent: Parent = Field(description="Details for parent org-unit.")
 
 
 class EngagementFrom(BaseModel):

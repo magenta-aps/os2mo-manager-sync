@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from collections.abc import Collection
 from collections.abc import Iterable
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from dateutil.tz import tzoffset  # type: ignore
@@ -32,9 +32,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("08eaf849-e9f9-53e0-b6b9-3cd45763ecbb"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("08eaf849-e9f9-53e0-b6b9-3cd45763ecbb"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -69,9 +69,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -108,9 +108,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -135,9 +135,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -160,9 +160,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -187,9 +187,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -214,9 +214,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             1977, 3, 2, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -239,9 +239,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -264,9 +264,9 @@ org_unit_samples = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -296,9 +296,9 @@ graphql_payload = {
                     "associations": [
                         {
                             "uuid": "36b5be05-7323-418f-bbd4-7be23c9ca150",
-                            "employee": "4c88d5a3-199f-454b-9349-a24ab218ca54",
-                            "org_unit": "7133da92-e624-56c9-8e23-bac319a537e1",
-                            "association_type": "2665d8e0-435b-5bb6-a550-f275692984ef",
+                            "employee_uuid": "4c88d5a3-199f-454b-9349-a24ab218ca54",
+                            "org_unit_uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
+                            "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
                             "validity": {
                                 "to": None,
                                 "from": "1977-03-02T00:00:00+02:00",
@@ -323,9 +323,9 @@ graphql_payload = {
                     "associations": [
                         {
                             "uuid": "ab1adf81-1c56-46ce-bd81-8cc536212c12",
-                            "employee": "8315443f-a918-4eea-9605-150472418101",
-                            "org_unit": "100b9d19-3190-490f-94f9-759b6b24172a",
-                            "association_type": "2665d8e0-435b-5bb6-a550-f275692984ef",
+                            "employee_uuid": "8315443f-a918-4eea-9605-150472418101",
+                            "org_unit_uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
+                            "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
                             "validity": {
                                 "to": None,
                                 "from": "2022-08-01T00:00:00+02:00",
@@ -352,9 +352,9 @@ org_unit_models = [
         associations=[
             Association(
                 uuid=UUID("36b5be05-7323-418f-bbd4-7be23c9ca150"),
-                employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                org_unit=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                org_unit_uuid=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date=datetime(1977, 3, 2, 0, 0, tzinfo=tzoffset(None, 7200)),
                     to_date=None,
@@ -375,9 +375,9 @@ org_unit_models = [
         associations=[
             Association(
                 uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                org_unit=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
                     to_date=None,
@@ -401,9 +401,9 @@ expected_managers = [
         associations=[
             Association(
                 uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
                     to_date=None,
@@ -424,9 +424,9 @@ expected_managers = [
         associations=[
             Association(
                 uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
                     to_date=None,
@@ -447,9 +447,9 @@ expected_managers = [
         associations=[
             Association(
                 uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
                     to_date=None,
@@ -559,9 +559,9 @@ filter_managers_data = [
             associations=[
                 Association(
                     uuid=UUID("36b5be05-7323-418f-bbd4-7be23c9ca150"),
-                    employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date="1978-01-01T00:00:00+01:00",
                         to_date=None,
@@ -569,9 +569,9 @@ filter_managers_data = [
                 ),
                 Association(
                     uuid=UUID("a8ff5cb0-8a59-4614-a41c-453df25007cc"),
-                    employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date="1978-01-01T00:00:00+01:00",
                         to_date=None,
@@ -602,9 +602,9 @@ filter_managers_data = [
             associations=[
                 Association(
                     uuid=UUID("a8ff5cb0-8a59-4614-a41c-453df25007cc"),
-                    employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date="1978-01-01T00:00:00+01:00",
                         to_date=None,
@@ -627,9 +627,9 @@ filter_managers_data = [
             associations=[
                 Association(
                     uuid=UUID("a9409fb0-a00e-490e-a429-c153385fb880"),
-                    employee=UUID("d9c71751-8afa-40c7-8b89-498db8c775d2"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("d9c71751-8afa-40c7-8b89-498db8c775d2"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date="1978-01-01",
                         to_date=None,
@@ -656,9 +656,9 @@ filter_managers_data = [
             associations=[
                 Association(
                     uuid=UUID("a9409fb0-a00e-490e-a429-c153385fb880"),
-                    employee=UUID("d9c71751-8afa-40c7-8b89-498db8c775d2"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("d9c71751-8afa-40c7-8b89-498db8c775d2"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date="1978-01-01",
                         to_date=None,
@@ -684,9 +684,9 @@ filter_managers_data_fail = (
         associations=[
             Association(
                 uuid=UUID("a8ff5cb0-8a59-4614-a41c-453df25007cc"),
-                employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date="1998-01-01T00:00:00+01:00",
                     to_date=None,
@@ -694,9 +694,9 @@ filter_managers_data_fail = (
             ),
             Association(
                 uuid=UUID("1caba8d9-6b9f-506b-b845-9a8c4f5b8a03"),
-                employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
-                org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                employee_uuid=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                 validity=Validity(
                     from_date="1998-01-01T00:00:00+01:00",
                     to_date=None,
@@ -731,9 +731,9 @@ filter_managers_terminate = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -765,9 +765,9 @@ filter_managers_terminate = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -777,9 +777,9 @@ filter_managers_terminate = [
                 ),
                 Association(
                     uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                    employee=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    org_unit_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -789,9 +789,9 @@ filter_managers_terminate = [
                 ),
                 Association(
                     uuid=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
-                    employee=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-                    org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                    org_unit_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -825,18 +825,20 @@ filter_managers_terminate = [
 updata_manager_data = [
     (  # Test update manager
         Manager(
-            uuid=UUID("585675fe-8e2a-43a1-b0d9-7879a669c347"),
+            uuid=None,
             manager_level=ManagerLevel(
                 uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38")
             ),
             manager_type=ManagerType(uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8")),
             employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             validity=Validity(
                 from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
                 to_date=None,
             ),
         ),
+        "08c85974-8929-456a-a166-efc7230ac5b7",
         gql(
             """
         mutation UpdateManager($input: ManagerUpdateInput!) {
@@ -850,17 +852,19 @@ updata_manager_data = [
         {
             "input": {
                 "uuid": "585675fe-8e2a-43a1-b0d9-7879a669c347",
-                "manager_level": {"uuid": "d09ba017-f838-4742-b57e-44c2f5437e38"},
-                "manager_type": {"uuid": "54d6ad15-d966-4523-8728-37718e3c46a8"},
+                "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
+                "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
                 "validity": {"from": "2022-08-01T00:00:00+02:00", "to": None},
-                "employee": "03ff3b1a-a16b-4ea6-b372-065a77f849cb",
+                "person": "03ff3b1a-a16b-4ea6-b372-065a77f849cb",
                 "responsibility": "d82039a5-f2d5-48e4-8eab-8c9f7694e16f",
+                "org_unit": "08c85974-8929-456a-a166-efc7230ac5b7",
             }
         },
     ),
     (  # Test create manager
         Manager(
-            uuid=UUID("585675fe-8e2a-43a1-b0d9-7879a669c347"),
+            uuid=None,
+            org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             manager_level=ManagerLevel(
                 uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38")
             ),
@@ -872,6 +876,7 @@ updata_manager_data = [
                 to_date=None,
             ),
         ),
+        "c935454a-e1ba-4bb4-bfca-853c0d69f35b",
         gql(
             """
         mutation CreateManager($input: ManagerCreateInput!) {
@@ -884,12 +889,13 @@ updata_manager_data = [
         None,
         {
             "input": {
-                "uuid": "585675fe-8e2a-43a1-b0d9-7879a669c347",
-                "manager_level": {"uuid": "d09ba017-f838-4742-b57e-44c2f5437e38"},
-                "manager_type": {"uuid": "54d6ad15-d966-4523-8728-37718e3c46a8"},
+                "uuid": None,
+                "manager_level": "d09ba017-f838-4742-b57e-44c2f5437e38",
+                "manager_type": "54d6ad15-d966-4523-8728-37718e3c46a8",
                 "validity": {"from": "2022-08-01T00:00:00+02:00", "to": None},
-                "employee": "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
+                "person": "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
                 "responsibility": "d82039a5-f2d5-48e4-8eab-8c9f7694e16f",
+                "org_unit": "c935454a-e1ba-4bb4-bfca-853c0d69f35b",
             }
         },
     ),
@@ -897,8 +903,31 @@ updata_manager_data = [
 
 create_manager_sample = [
     (
-        UUID("8315443f-a918-4eea-9605-150472418101"),
-        datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+        OrgUnitManagers(
+            uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+            name="Social Indsats_LEDER",
+            child_count=3,
+            parent=Parent(
+                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                name="Skoler",
+                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+            ),
+            associations=[
+                Association(
+                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
         ManagerLevel(
             uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
         ),
@@ -906,6 +935,7 @@ create_manager_sample = [
             uuid=None,
             employee=UUID("8315443f-a918-4eea-9605-150472418101"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             manager_level=ManagerLevel(
                 uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
             ),
@@ -914,13 +944,36 @@ create_manager_sample = [
             ),
             validity=Validity(
                 to_date=None,
-                from_date="2022-08-01T00:00:00+02:00",
+                from_date="2019-01-14",
             ),
         ),
     ),
     (
-        UUID("8315443f-a918-4eea-9605-150472418101"),
-        datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+        OrgUnitManagers(
+            uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+            name="Social Indsats_LEDER",
+            child_count=3,
+            parent=Parent(
+                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                name="Skoler",
+                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+            ),
+            associations=[
+                Association(
+                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
         ManagerLevel(
             uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
         ),
@@ -928,6 +981,7 @@ create_manager_sample = [
             uuid=None,
             employee=UUID("8315443f-a918-4eea-9605-150472418101"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             manager_level=ManagerLevel(
                 uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
             ),
@@ -936,7 +990,7 @@ create_manager_sample = [
             ),
             validity=Validity(
                 to_date=None,
-                from_date="2022-08-01T00:00:00+02:00",
+                from_date="2019-01-14",
             ),
         ),
     ),
@@ -957,9 +1011,9 @@ get_manager_lvl_sample = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -988,9 +1042,9 @@ get_manager_lvl_sample = [
             associations=[
                 Association(
                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
                     validity=Validity(
                         from_date=datetime(
                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
@@ -1000,34 +1054,110 @@ get_manager_lvl_sample = [
                 ),
             ],
         ),
-        OrgUnitManagers(
-            uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-            name="Skoler_led-adm",
-            child_count=2,
-            parent=Parent(
-                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-                name="Some Unit",
-                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                org_unit_level_uuid=UUID("891603db-cc28-6ed2-6d48-25e14d3f142f"),
-            ),
-            associations=[
-                Association(
-                    uuid=UUID("a8ff5cb0-8a59-4614-a41c-453df25007cc"),
-                    employee=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-                    org_unit=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type=UUID("891603db-cc28-6ed2-6d48-25e14d3f142f"),
-                    validity=Validity(
-                        from_date="1998-01-01T00:00:00+01:00",
-                        to_date=None,
-                    ),
-                )
-            ],
-        ),
+        {
+            "org_units": [
+                {
+                    "objects": [
+                        {"org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
+                    ]
+                }
+            ]
+        },
         ManagerLevel(
             uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
         ),
     ),
 ]
+
+get_create_update_manager_sample = (
+    OrgUnitManagers(
+        uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+        name="Social og sundhed_leder",
+        child_count=0,
+        parent=Parent(
+            uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+            name="Skoler",
+            parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+            org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
+        ),
+        associations=[
+            Association(
+                uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                validity=Validity(
+                    from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+                    to_date=None,
+                ),
+            )
+        ],
+    ),
+    ManagerLevel(
+        uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+    ),
+    Manager(
+        uuid=None,
+        employee=UUID("8315443f-a918-4eea-9605-150472418101"),
+        responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+        org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+        manager_level=ManagerLevel(
+            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+        ),
+        manager_type=ManagerType(
+            uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
+        ),
+        validity=Validity(
+            to_date=None,
+            from_date="2022-05-01T00:00:00+02:00",
+        ),
+    ),
+)
+
+get_create_update_manager_led_adm_sample = (
+    OrgUnitManagers(
+        uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+        name="Social og sundhed_leder",
+        child_count=0,
+        parent=Parent(
+            uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+            name="Skoler_led-adm",
+            parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+            org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
+        ),
+        associations=[
+            Association(
+                uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                org_unit_uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+                association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                validity=Validity(
+                    from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+                    to_date=None,
+                ),
+            )
+        ],
+    ),
+    ManagerLevel(
+        uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+    ),
+    Manager(
+        uuid=None,
+        employee=UUID("8315443f-a918-4eea-9605-150472418101"),
+        responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+        org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+        manager_level=ManagerLevel(
+            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
+        ),
+        manager_type=ManagerType(
+            uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
+        ),
+        validity=Validity(
+            to_date=None,
+            from_date="2022-05-01T00:00:00+02:00",
+        ),
+    ),
+)
 
 
 def get_sample_data() -> tuple[list[list[OrgUnitManagers]], list[OrgUnitManagers]]:
@@ -1058,17 +1188,29 @@ def get_filter_managers_terminate() -> list[tuple[OrgUnitManagers, object, list[
     return filter_managers_terminate
 
 
-def get_update_managers_data() -> list[
-    tuple[Manager, gql, str | None, dict[str, dict[str, Collection[str]]]]
-]:
+def get_update_managers_data() -> list[tuple[Manager, str, Any, str | None, object]]:
     return updata_manager_data
 
 
-def get_create_manager_data() -> list[tuple[UUID, datetime, ManagerLevel, Manager]]:
+def get_create_manager_data() -> list[tuple[OrgUnitManagers, ManagerLevel, Manager]]:
     return create_manager_sample
 
 
 def get_manager_level_data() -> list[
-    tuple[OrgUnitManagers, OrgUnitManagers | None, ManagerLevel]
+    tuple[
+        OrgUnitManagers,
+        dict[str, list[dict[str, list[dict[str, str]]]]] | None,
+        ManagerLevel,
+    ]
 ]:
     return get_manager_lvl_sample
+
+
+def get_create_update_manager_data() -> tuple[OrgUnitManagers, ManagerLevel, Manager]:
+    return get_create_update_manager_sample
+
+
+def get_create_update_manager_led_adm_data() -> tuple[
+    OrgUnitManagers, ManagerLevel, Manager
+]:
+    return get_create_update_manager_led_adm_sample

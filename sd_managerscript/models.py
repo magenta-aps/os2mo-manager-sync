@@ -24,22 +24,22 @@ class Association(BaseModel):
     """Model representing an association creation."""
 
     uuid: UUID = Field(description="UUID of association.")
-    org_unit: UUID = Field(description="UUID of the org-unit.")
-    employee: UUID = Field(description="UUID of the related employee.")
-    association_type: UUID = Field(description="UUID of the association type.")
+    org_unit_uuid: UUID = Field(description="UUID of the org-unit.")
+    employee_uuid: UUID = Field(description="UUID of the related employee.")
+    association_type_uuid: UUID = Field(description="UUID of the association type.")
     validity: Validity = Field(description="Validity range for the org-unit.")
 
 
 class ManagerLevel(BaseModel):
     """Managerlevel"""
 
-    uuid: UUID = Field(description="UUID og the managerlevel.")
+    uuid: UUID = Field(description="UUID of the managerlevel.")
 
 
 class ManagerType(BaseModel):
     """Managertype"""
 
-    uuid: UUID = Field(description="UUID og the managertype.")
+    uuid: UUID = Field(description="UUID of the managertype.")
 
 
 class Manager(BaseModel):
@@ -51,7 +51,8 @@ class Manager(BaseModel):
         description="Manager type object. Same for all managers"
     )
     validity: Validity = Field(description="From date and to date for manager role.")
-    uuid: UUID | None = Field(description="UUID og the manager.")
+    org_unit: UUID = Field(description="UUID of the org-unit.")
+    uuid: UUID | None = Field(description="UUID of the manager.")
     responsibility: UUID | None = Field(
         get_settings().responsibility_uuid,
         description="Responsibilities. Uses default for all managers",

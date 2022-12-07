@@ -7,7 +7,6 @@ from uuid import UUID
 
 import structlog
 from fastapi.encoders import jsonable_encoder
-from gql import gql  # type: ignore
 from more_itertools import collapse
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
@@ -23,139 +22,17 @@ from .models import OrgUnitManagers
 from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit
+from sd_managerscript.queries import ASSOCIATION_TERMINATE
+from sd_managerscript.queries import CREATE_MANAGER
+from sd_managerscript.queries import CURRENT_MANAGER
+from sd_managerscript.queries import MANAGER_TERMINATE
+from sd_managerscript.queries import QUERY_ENGAGEMENTS
+from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
+from sd_managerscript.queries import QUERY_ORG_UNITS
+from sd_managerscript.queries import QUERY_ROOT_ORG_UNIT
+from sd_managerscript.queries import UPDATE_MANAGER
 
 logger = structlog.get_logger()
-
-ORG_UNITS = "org_units"
-
-QUERY_ORG = gql("query {org { uuid }}")
-
-QUERY_ROOT_ORG_UNIT = gql(
-    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {uuid}}"""
-)
-
-QUERY_ORG_UNIT_LEVEL = gql(
-    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {objects{org_unit_level_uuid}}}"""
-)
-
-QUERY_ORG_UNITS = gql(
-    """
-    query ($uuid: [UUID!]!){
-        org_units (parents: $uuid){
-            objects {
-                uuid
-                name
-                child_count
-                associations {
-                    uuid
-                    org_unit_uuid
-                    employee_uuid
-                    association_type_uuid
-                    validity{
-                        from
-                        to
-                    }
-                }
-                parent{
-                    uuid
-                    name
-                    parent_uuid
-                    org_unit_level_uuid
-                }
-            }
-        }
-    }
-"""
-)
-
-QUERY_ENGAGEMENTS = gql(
-    """
-        query ($uuid: [UUID!]!){
-            engagements (employees: $uuid){
-                objects{
-                    validity{
-                        from
-                        to
-                    }
-                }
-            }
-        }
-    """
-)
-
-CURRENT_MANAGER = gql(
-    """
-    query ($uuid: [UUID!]!){
-  org_units(uuids: $uuid) {
-    objects {
-      managers {
-        uuid
-      }
-    }
-  }
-}
-"""
-)
-
-UPDATE_MANAGER = gql(
-    """
-        mutation UpdateManager($input: ManagerUpdateInput!) {
-            manager_update(input: $input) {
-                uuid
-            }
-        }
-    """
-)
-
-CREATE_MANAGER = gql(
-    """
-        mutation CreateManager($input: ManagerCreateInput!) {
-            manager_create(input: $input) {
-                uuid
-            }
-        }
-    """
-)
-
-MANAGER_TERMINATE = gql(
-    """
-        mutation ($input: ManagerTerminateInput!){
-            manager_terminate(input: $input){
-                uuid
-            }
-        }
-    """
-)
-
-ASSOCIATION_QUERY = gql(
-    """
-        query ($employees: [UUID!]!, $org_units: [UUID!]!){
-            associations(employees: $employees, org_units: $org_units) {
-                uuid
-            }
-        }
-    """
-)
-
-ASSOCIATION_TERMINATE = gql(
-    """
-        mutation($input: AssociationTerminateInput!){
-            association_terminate(input: $input){
-                uuid
-            }
-        }
-    """
-)
-
-MANAGER_TERMINATE = gql(
-    """
-        mutation($input: ManagerTerminateInput!){
-            manager_terminate(input: $input){
-                uuid
-            }
-        }
-    """
-)
 
 
 async def get_manager_org_units(
@@ -212,7 +89,7 @@ async def terminate_association(
     input = {
         "input": {
             "uuid": str(association_uuid),
-            "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
+            "to": datetime.today().date().isoformat(),
         }
     }
 
@@ -306,9 +183,7 @@ async def filter_managers(
             org_unit_dict["associations"],
         )
     )
-    active_engagements = [
-        jsonable_encoder(engagement) for engagement in active_engagements
-    ]
+    active_engagements = list(map(jsonable_encoder, active_engagements))
 
     # Filter away non-active engagements.
     filtered_engagements = list(
@@ -424,7 +299,7 @@ async def create_manager_object(
         manager_level=manager_level,
         manager_type=ManagerType(uuid=manager_type_uuid),
         validity=Validity(
-            from_date=(datetime.today() - timedelta(days=0)).date().isoformat(),
+            from_date=datetime.today().date().isoformat(),
             to_date=None,
         ),
     )  # type: ignore

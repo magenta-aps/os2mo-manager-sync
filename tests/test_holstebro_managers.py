@@ -14,6 +14,7 @@ import pytest
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 
+from sd_managerscript.holstebro_managers import check_manager_engagement
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
 from sd_managerscript.holstebro_managers import filter_managers
@@ -21,6 +22,7 @@ from sd_managerscript.holstebro_managers import get_active_engagements
 from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
+from sd_managerscript.holstebro_managers import get_unengaged_managers
 from sd_managerscript.holstebro_managers import terminate_association
 from sd_managerscript.holstebro_managers import terminate_manager
 from sd_managerscript.holstebro_managers import update_manager
@@ -35,8 +37,10 @@ from tests.test_data.sample_test_data import get_create_update_manager_led_adm_d
 from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
+from tests.test_data.sample_test_data import get_manager_engagement_data
 from tests.test_data.sample_test_data import get_manager_level_data
 from tests.test_data.sample_test_data import get_sample_data
+from tests.test_data.sample_test_data import get_unengaged_managers_data
 from tests.test_data.sample_test_data import get_update_managers_data
 
 
@@ -74,6 +78,54 @@ async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
     returned_managers = await get_manager_org_units(gql_client, org_unit_uuid=uuid)
 
     assert returned_managers == expected_managers
+
+
+@pytest.mark.parametrize(
+    "org_unit_uuid, root_uuid",
+    [
+        (
+            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+        ),
+        (
+            UUID("b6fd7f0e-b47f-4370-a8d3-8003cbfb3be2"),
+            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+        ),
+    ],
+)
+@patch("sd_managerscript.holstebro_managers.get_unengaged_managers")
+@patch("sd_managerscript.holstebro_managers.query_graphql")
+async def test_check_manager_engagement(
+    mock_query_graphql: AsyncMock,
+    mock_get_unengaged_managers: MagicMock,
+    gql_client: MagicMock,
+    org_unit_uuid: UUID,
+    root_uuid: UUID,
+) -> None:
+    """
+    Test check_manager_engagement can check if managers are engaged
+    and if not, will terminate the manager role.
+    """
+
+    sample_data, managers = get_manager_engagement_data()
+    mock_query_graphql.side_effect = sample_data
+    mock_get_unengaged_managers.side_effect = managers
+
+    managers_list = await check_manager_engagement(gql_client, org_unit_uuid, root_uuid)
+    expected = [x for x in managers if x is not None]
+
+    assert managers_list == expected
+
+
+@pytest.mark.parametrize("query_dict, expected", get_unengaged_managers_data())
+async def test_get_unengaged_managers(
+    query_dict: dict[str, str | dict[str, str]], expected: UUID | None
+) -> None:
+    """Test The input gets filtered correctly to find managers with no active engagement"""
+
+    managers_to_terminate = await get_unengaged_managers(query_dict)
+
+    assert managers_to_terminate == expected
 
 
 @pytest.mark.parametrize(

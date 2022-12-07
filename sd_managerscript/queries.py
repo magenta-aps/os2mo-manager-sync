@@ -132,3 +132,53 @@ MANAGER_TERMINATE = gql(
         }
     """
 )
+
+QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
+    """
+        query ($uuid: [UUID!]!){
+            org_units (uuids: $uuid){
+                uuid
+                objects{
+                    child_count
+                    managers{
+                        uuid
+                        employee {
+                            engagements {
+                                org_unit_uuid
+                                validity{
+                                    from
+                                    to
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+)
+
+QUERY_MANAGER_ENGAGEMENTS = gql(
+    """
+        query ($uuid: [UUID!]!){
+            org_units (parents: $uuid){
+                uuid
+                objects{
+                    child_count
+                    managers{
+                        uuid
+                        employee {
+                            engagements {
+                                org_unit_uuid
+                                validity{
+                                    from
+                                    to
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+)

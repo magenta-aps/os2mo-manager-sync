@@ -11,30 +11,36 @@ logger = structlog.get_logger()
 
 """org-unit name, uuid of org-unit."""
 manager_org_units = [
-    (
-        "Kloakering",
-        "cf4daae1-4812-41f1-8c47-63a99e26aadf",
-    ),
-    (
-        "Social og sundhed",
-        "a6773531-6c0a-4c7b-b0e2-77992412b610",
-    ),
-    (
-        "Social Indsats",
-        "535ba446-d618-4e51-8dae-821d63e26560",
-    ),
-    (
-        "Hejls skole",
-        "48fa5e8a-5a47-5df3-a10b-292ed181e054",
-    ),
-    (
-        "Almind skole",
-        "bc876b6c-3682-5b60-804b-95ff759b5509",
-    ),
-    (
-        "Byudvikling",
-        "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-    ),
+    {
+        "name": "Kloakering",
+        "org_unit_uuid": "cf4daae1-4812-41f1-8c47-63a99e26aadf",
+        "org_unit_level": "0263522a-2c1e-9c80-1880-92c1b97cfead",
+    },
+    {
+        "name": "Social og sundhed",
+        "org_unit_uuid": "a6773531-6c0a-4c7b-b0e2-77992412b610",
+        "org_unit_level": "891603db-cc28-6ed2-6d48-25e14d3f142f",
+    },
+    {
+        "name": "Social Indsats",
+        "org_unit_uuid": "535ba446-d618-4e51-8dae-821d63e26560",
+        "org_unit_level": "fc968d00-41f2-3efb-401a-30a3cf854227",
+    },
+    {
+        "name": "Hejls skole",
+        "org_unit_uuid": "48fa5e8a-5a47-5df3-a10b-292ed181e054",
+        "org_unit_level": "750e734e-17b8-0174-6787-a5be55adca31",
+    },
+    {
+        "name": "Almind skole",
+        "org_unit_uuid": "bc876b6c-3682-5b60-804b-95ff759b5509",
+        "org_unit_level": "3ee6f4a5-02cc-41a0-82cc-4b8243664423",
+    },
+    {
+        "name": "Byudvikling",
+        "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+        "org_unit_level": "fc968d00-41f2-3efb-401a-30a3cf854227",
+    },
 ]
 
 """org-unit name, uuid of org-unit."""
@@ -85,6 +91,24 @@ employees = [
         "1e96bf0b-bcfe-4703-a604-2e829b5a7663",
     ),
     ("bff25bde-a300-43b6-a070-778a60f59a7d", "c0814647-ae83-4c43-9ff2-ccc42dfd429c"),
+]
+
+parent_org_units = [
+    {
+        "org_unit_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
+        "org_unit_level": "891603db-cc28-6ed2-6d48-25e14d3f142f",
+    },
+    {
+        "org_unit_uuid": "b6c11152-0645-4712-a207-ba2c53b391ab",
+        "org_unit_level": "891603db-cc28-6ed2-6d48-25e14d3f142f",
+    },
+]
+
+manager_level_classes = [
+    {"name": "Kommunal Direktør", "uuid": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"},
+    {"name": "Direktør", "uuid": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0"},
+    {"name": "Chef", "uuid": "a8754726-a4b9-1715-6b41-769c6fe703c5"},
+    {"name": "Leder", "uuid": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2"},
 ]
 
 
@@ -147,6 +171,54 @@ UPDATE_ORG_UNIT = gql(
     """
 )
 
+UPDATE_OU_LEVEL = gql(
+    """
+    mutation (
+        $uuid: UUID!
+        $org_unit_level: UUID!
+        $from: DateTime!
+    )
+    {
+        org_unit_update (
+            input: {
+                org_unit_level: $org_unit_level
+                uuid: $uuid
+                validity: {from: $from}
+            }
+        )
+        {
+            uuid
+        }
+    }
+    """
+)
+
+CREATE_MANAGER_LEVEL_CLASSES = gql(
+    """
+    mutation (
+        $uuid: UUID!
+        $name: String!
+        $user_key: String!
+        $facet_uuid: UUID!
+        $org_uuid: UUID!
+    )
+    {
+        class_create (
+            input: {
+                uuid: $uuid
+                facet_uuid: $facet_uuid
+                name: $name
+                user_key: $user_key
+                org_uuid: $org_uuid
+            }
+        )
+        {
+            uuid
+        }
+    }
+    """
+)
+
 
 def construct_client(client_secret: str) -> GraphQLClient:
     """Construct clients froms settings.
@@ -171,10 +243,10 @@ def construct_client(client_secret: str) -> GraphQLClient:
     return gql_client
 
 
-def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> str:
+def create_manager_ou(input: dict[str, str], gql_client: GraphQLClient) -> str:
     """Create new sub org-units with name as parent + '_leder '"""
-    name = input[0] + "_leder"
-    parent = input[1]  # UUID
+    name = input["name"] + "_leder"
+    parent = input["org_unit_uuid"]  # UUID
     org_unit_type = "9d2ac723-d5e5-4e7f-9c7f-b207bd223bc2"
     from_date = "2022-07-31"
     data = {
@@ -187,7 +259,7 @@ def create_manager_ou(input: tuple, gql_client: GraphQLClient) -> str:
     org_unit = gql_client.execute(
         CREATE_MANAGER_ORG_UNIT, variable_values=jsonable_encoder(data)
     )
-
+    logger.info("_leder org-units created!")
     return org_unit["org_unit_create"]["uuid"]  # type: ignore
 
 
@@ -207,6 +279,8 @@ def create_led_adm_org_units(gql_client: GraphQLClient, input: tuple) -> None:
 
     gql_client.execute(UPDATE_ORG_UNIT, variable_values=jsonable_encoder(data))
 
+    logger.info("Org-units with led-adm extension updated!")
+
 
 def create_redundant_ou(gql_client: GraphQLClient, input: tuple) -> None:
     """Create new sub org-units with name as parent + prepend "Ø_" and append '_leder '"""
@@ -222,6 +296,8 @@ def create_redundant_ou(gql_client: GraphQLClient, input: tuple) -> None:
     }
 
     gql_client.execute(CREATE_MANAGER_ORG_UNIT, variable_values=jsonable_encoder(data))
+
+    logger.info("Created org-units with Ø prepended")
 
 
 def create_assocications(
@@ -243,6 +319,40 @@ def create_assocications(
 
     gql_client.execute(CREATE_ASSOCIATION, variable_values=variables)
 
+    logger.info("Created associations in _leder org-units")
+
+
+def update_parent_org_unit_level(
+    gql_client: GraphQLClient, org_unit: dict[str, str]
+) -> None:
+    """Set parent org-unit level to match those from client instance"""
+
+    variables = {
+        "uuid": org_unit["org_unit_uuid"],
+        "org_unit_level": org_unit["org_unit_level"],
+        "from": "2018-02-05",
+    }
+
+    gql_client.execute(UPDATE_OU_LEVEL, variable_values=variables)
+    logger.info("Updated parent org-units org-unit-level")
+
+
+def create_manager_level_classes(
+    gql_client: GraphQLClient, input: dict[str, str]
+) -> None:
+    """Create manager level classes with same UUIDS as on client instance"""
+
+    input = {
+        "uuid": input["uuid"],
+        "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+        "name": input["name"],
+        "user_key": input["name"],
+        "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+    }
+
+    gql_client.execute(CREATE_MANAGER_LEVEL_CLASSES, variable_values=input)
+    logger.info(f"Created Manager level class '{input['name']}'.")
+
 
 @click.command()
 @click.argument("client_password")
@@ -263,6 +373,15 @@ def inject_data(client_password: str) -> None:
 
     for org_unit_tuple in redundant_org_units:
         create_redundant_ou(gql_client, org_unit_tuple)
+
+    for org_unit in manager_org_units:  # type:ignore
+        update_parent_org_unit_level(gql_client, org_unit)  # type:ignore
+
+    for org_unit in parent_org_units:  # type:ignore
+        update_parent_org_unit_level(gql_client, org_unit)  # type:ignore
+
+    for level in manager_level_classes:
+        create_manager_level_classes(gql_client, level)
 
     click.echo("Test data injected!")
 

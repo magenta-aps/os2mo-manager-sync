@@ -5,21 +5,24 @@ from datetime import datetime
 from datetime import timedelta
 from unittest import mock
 from unittest.mock import AsyncMock
+from unittest.mock import call
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from uuid import UUID
-from uuid import uuid4
 
 import pytest
+from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 
 from sd_managerscript.holstebro_managers import create_manager_object
+from sd_managerscript.holstebro_managers import create_update_manager
 from sd_managerscript.holstebro_managers import filter_managers
 from sd_managerscript.holstebro_managers import get_active_engagements
 from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import terminate_association
+from sd_managerscript.holstebro_managers import terminate_manager
 from sd_managerscript.holstebro_managers import update_manager
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
@@ -27,6 +30,8 @@ from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
+from tests.test_data.sample_test_data import get_create_update_manager_data
+from tests.test_data.sample_test_data import get_create_update_manager_led_adm_data
 from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
@@ -180,11 +185,48 @@ async def test_terminate_association(
     input = {
         "input": {
             "uuid": association_uuid,
-            "to": (datetime.today() - timedelta(days=1)).date().isoformat(),
+            "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
         }
     }
 
     await terminate_association(gql_client, UUID(association_uuid))
+
+    mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input)
+
+
+@pytest.mark.parametrize(
+    "manager_uuid",
+    [
+        "36b5be05-7323-418f-bbd4-7be23c9ca150",
+        "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
+    ],
+)
+@patch("sd_managerscript.holstebro_managers.execute_mutator", new_callable=AsyncMock)
+async def test_terminate_manager(
+    mock_execute_mutator: AsyncMock,
+    gql_client: MagicMock,
+    manager_uuid: str,
+) -> None:
+    """Test "terminate_manager" is called."""
+
+    mut_query = gql(
+        """
+        mutation($input: ManagerTerminateInput!){
+            manager_terminate(input: $input){
+                uuid
+            }
+        }
+    """
+    )
+
+    input = {
+        "input": {
+            "uuid": manager_uuid,
+            "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
+        }
+    }
+
+    await terminate_manager(gql_client, UUID(manager_uuid))
 
     mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input)
 
@@ -227,7 +269,8 @@ async def test_get_current_manager_none(
 
 
 @pytest.mark.parametrize(
-    "manager, query, current_manager_uuid, variables", get_update_managers_data()
+    "manager, org_unit_uuid, query, current_manager_uuid, variables",
+    get_update_managers_data(),
 )
 @patch("sd_managerscript.holstebro_managers.execute_mutator")
 @patch("sd_managerscript.holstebro_managers.get_current_manager")
@@ -236,13 +279,12 @@ async def test_update_manager_object(
     mock_execute_mutator: AsyncMock,
     gql_client: MagicMock,
     manager: Manager,
+    org_unit_uuid: UUID,
     query: str,
     current_manager_uuid: str,
     variables: dict,
 ) -> None:
     """Test update_manager can update and create new manager object"""
-
-    org_unit_uuid = uuid4()
 
     mock_get_current_manager.return_value = current_manager_uuid
 
@@ -252,20 +294,18 @@ async def test_update_manager_object(
 
 
 @pytest.mark.parametrize(
-    "employee_uuid, from_date, manager_level, expected_manager",
+    "org_unit, manager_level, expected_manager",
     get_create_manager_data(),
 )
+@freeze_time("2019-01-14", tz_offset=1)
 async def test_create_manager_object(
-    employee_uuid: UUID,
-    from_date: datetime,
+    org_unit: OrgUnitManagers,
     manager_level: ManagerLevel,
     expected_manager: Manager,
 ) -> None:
     """Test creation of Manager object based on OrgUnitManagers object"""
 
-    returned_manager = await create_manager_object(
-        employee_uuid, from_date, manager_level
-    )
+    returned_manager = await create_manager_object(org_unit, manager_level)
 
     assert returned_manager == expected_manager
 
@@ -273,17 +313,67 @@ async def test_create_manager_object(
 @pytest.mark.parametrize(
     "org_unit, parent_org_unit, expected_manager_lvl", get_manager_level_data()
 )
-@patch("sd_managerscript.holstebro_managers.query_org_unit")
+@patch("sd_managerscript.holstebro_managers.query_graphql")
 async def test_get_manager_level(
-    mock_query_org_unit: AsyncMock,
+    mock_query_query_graphql: AsyncMock,
+    gql_client: MagicMock,
     org_unit: OrgUnitManagers,
-    parent_org_unit: OrgUnitManagers,
+    parent_org_unit: dict,
     expected_manager_lvl: ManagerLevel,
 ) -> None:
     """Test getting correct org-unit level uuid"""
 
-    mock_query_org_unit.return_value = parent_org_unit
+    mock_query_query_graphql.return_value = parent_org_unit
 
     returned_manager_lvl = await get_manager_level(gql_client, org_unit)
 
     assert returned_manager_lvl == expected_manager_lvl
+
+
+@patch("sd_managerscript.holstebro_managers.update_manager")
+@patch("sd_managerscript.holstebro_managers.create_manager_object")
+@patch("sd_managerscript.holstebro_managers.get_manager_level")
+async def test_create_update_manager(
+    mock_get_manager_level: MagicMock,
+    mock_create_manager_object: MagicMock,
+    mock_update_manager: MagicMock,
+) -> None:
+    """Test creating and updating Manager object and role"""
+
+    org_unit, manager_lvl, manager = get_create_update_manager_data()
+
+    mock_get_manager_level.return_value = manager_lvl
+    mock_create_manager_object.return_value = manager
+
+    await create_update_manager(gql_client, org_unit)
+
+    mock_update_manager.assert_called_once_with(
+        gql_client, org_unit.parent.uuid, manager
+    )
+
+
+@patch("sd_managerscript.holstebro_managers.update_manager")
+@patch("sd_managerscript.holstebro_managers.create_manager_object")
+@patch("sd_managerscript.holstebro_managers.get_manager_level")
+async def test_create_update_manager_led_adm(
+    mock_get_manager_level: MagicMock,
+    mock_create_manager_object: MagicMock,
+    mock_update_manager: MagicMock,
+) -> None:
+    """
+    Test creating and updating Manager object and role with
+    parent being a "led-adm" org-unit
+
+    """
+    org_unit, manager_lvl, manager = get_create_update_manager_led_adm_data()
+
+    mock_get_manager_level.return_value = manager_lvl
+    mock_create_manager_object.return_value = manager
+    calls = [
+        call(gql_client, org_unit.parent.uuid, manager),
+        call(gql_client, org_unit.parent.parent_uuid, manager),
+    ]
+
+    await create_update_manager(gql_client, org_unit)
+
+    mock_update_manager.assert_has_calls(calls, any_order=True)

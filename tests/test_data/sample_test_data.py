@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from collections.abc import Collection
 from collections.abc import Iterable
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -337,6 +339,272 @@ graphql_payload = {
         },
     ]
 }
+
+unengaged_managers_sample = [
+    (  # Test with two different engagements (can it match by org_unit_uuid?)
+        {
+            "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+            "objects": [
+                {
+                    "child_count": 2,
+                    "managers": [
+                        {
+                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                            "employee": [
+                                {
+                                    "engagements": [
+                                        {
+                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                                            "validity": {
+                                                "from": "2019-02-20T00:00:00+01:00",
+                                                "to": None,
+                                            },
+                                        },
+                                        {
+                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
+                                            "validity": {
+                                                "from": "2022-11-20T00:00:00+01:00",
+                                                "to": None,
+                                            },
+                                        },
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        },
+        None,
+    ),
+    (  # Test no engagements
+        {
+            "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
+            "objects": [
+                {
+                    "child_count": 0,
+                    "managers": [
+                        {
+                            "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
+                            "employee": [{"engagements": []}],
+                        }
+                    ],
+                }
+            ],
+        },
+        UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+    ),
+    (  # Test to-date before today (no active engagement)
+        {
+            "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+            "objects": [
+                {
+                    "child_count": 0,
+                    "managers": [
+                        {
+                            "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
+                            "employee": [
+                                {
+                                    "engagements": [
+                                        {
+                                            "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+                                            "validity": {
+                                                "from": "2021-02-09T00:00:00+01:00",
+                                                "to": "2022-07-26T00:00:00+02:00",
+                                            },
+                                        }
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        },
+        UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+    ),
+    (  # Test NO managers
+        {
+            "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
+            "objects": [
+                {
+                    "child_count": 0,
+                    "managers": [],
+                }
+            ],
+        },
+        None,
+    ),
+]
+
+engagement_samples = [
+    {
+        "org_units": [
+            {
+                "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                "objects": [
+                    {
+                        "child_count": 2,
+                        "managers": [
+                            {
+                                "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                                "employee": [
+                                    {
+                                        "engagements": [
+                                            {
+                                                "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa: E501
+                                                "validity": {
+                                                    "from": "2019-02-20T00:00:00+01:00",
+                                                    "to": None,
+                                                },
+                                            },
+                                            {
+                                                "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa: E501
+                                                "validity": {
+                                                    "from": "2022-11-20T00:00:00+01:00",
+                                                    "to": None,
+                                                },
+                                            },
+                                        ]
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [
+                            {
+                                "uuid": "a9894c2b-8eaa-4487-97c9-9644fb22f93e",
+                                "employee": [
+                                    {
+                                        "engagements": [
+                                            {
+                                                "org_unit_uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa: E501
+                                                "validity": {
+                                                    "from": "1979-04-21T00:00:00+01:00",
+                                                    "to": None,
+                                                },
+                                            }
+                                        ]
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [
+                            {
+                                "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
+                                "employee": [{"engagements": []}],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "uuid": "e054559b-bc15-4203-bced-44375aed1555",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [
+                            {
+                                "uuid": "f000416d-193d-45da-a405-bf95fe4f65d1",
+                                "employee": [
+                                    {
+                                        "engagements": [
+                                            {
+                                                "org_unit_uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",  # noqa: E501
+                                                "validity": {
+                                                    "from": "1987-12-05T00:00:00+01:00",
+                                                    "to": None,
+                                                },
+                                            }
+                                        ]
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [
+                            {
+                                "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
+                                "employee": [
+                                    {
+                                        "engagements": [
+                                            {
+                                                "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa: E501
+                                                "validity": {
+                                                    "from": "2021-02-09T00:00:00+01:00",
+                                                    "to": "2022-07-26T00:00:00+02:00",
+                                                },
+                                            }
+                                        ]
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+        ]
+    },
+    {
+        "org_units": [
+            {
+                "uuid": "0c655440-867d-561e-8c28-2aa0ac8d1e20",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [
+                            {
+                                "uuid": "d0d0ab19-f69d-425e-a089-76610e8329dc",
+                                "employee": [{"engagements": []}],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
+                "objects": [
+                    {
+                        "child_count": 0,
+                        "managers": [],
+                    }
+                ],
+            },
+        ]
+    },
+]
+
+expected_managers_list = [
+    None,
+    None,
+    UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+    None,
+    UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+    UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
+    None,
+]
 
 org_unit_models = [
     OrgUnitManagers(
@@ -1214,3 +1482,15 @@ def get_create_update_manager_led_adm_data() -> tuple[
     OrgUnitManagers, ManagerLevel, Manager
 ]:
     return get_create_update_manager_led_adm_sample
+
+
+def get_manager_engagement_data() -> tuple[
+    list[dict[str, list[dict[str, Sequence[Collection[str]]]]]], list[UUID | None]
+]:
+    return engagement_samples, expected_managers_list
+
+
+def get_unengaged_managers_data() -> list[
+    tuple[dict[str, Sequence[Collection[str]]], UUID | None]
+]:
+    return unengaged_managers_sample

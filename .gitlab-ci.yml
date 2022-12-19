@@ -14,7 +14,7 @@ variables:
   IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
 
   RELEASE_REGISTRY: docker.io
-  RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mo-sd-to-mo-manager-update
+  RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mo-managerscript
 
   PYTEST_COV_MODULE: sd_managerscript
   PYTEST_COV_FAIL_UNDER: 80
@@ -70,3 +70,25 @@ Build:
   extends: .build-docker
   variables:
     BUILD_DOCKER_EXTRA_FLAGS: "--build-arg=COMMIT_SHA=${CI_COMMIT_SHA} --build-arg=COMMIT_TAG=${CI_COMMIT_TAG}"
+
+# Deploy
+#########
+# Flux
+Deploy to Flux Dev:
+  extends: .release-to-dev
+  needs:
+    - Release version
+  variables:
+    ENDPOINT: os2mo/flux/sd_managerscript/update-dev
+
+Deploy to Flux Test:
+  extends: .release-to-test
+  needs: []
+  variables:
+    ENDPOINT: os2mo/flux/sd_managerscript/update-test
+
+Deploy to Flux Prod:
+  extends: .release-to-prod
+  needs: []
+  variables:
+    ENDPOINT: os2mo/flux/sd_managerscript/update-prod

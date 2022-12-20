@@ -14,7 +14,10 @@ import pytest
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 
+from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.holstebro_managers import check_manager_engagement
+from sd_managerscript.holstebro_managers import check_manager_level_classes
+from sd_managerscript.holstebro_managers import create_class
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
 from sd_managerscript.holstebro_managers import filter_managers
@@ -180,8 +183,8 @@ async def test_filter_managers_error_raised(
 
     mock_get_active_engagements.side_effect = managers
 
-    with pytest.raises(Exception):
-        _ = await filter_managers(gql_client, org_unit)
+    with pytest.raises(ConflictingManagers):
+        await filter_managers(gql_client, org_unit)
 
 
 @pytest.mark.parametrize(
@@ -429,3 +432,74 @@ async def test_create_update_manager_led_adm(
     await create_update_manager(gql_client, org_unit)
 
     mock_update_manager.assert_has_calls(calls, any_order=True)
+
+
+@patch("sd_managerscript.holstebro_managers.query_graphql")
+async def test_manager_level_classes(
+    mock_query_graphql: AsyncMock, gql_client: MagicMock
+) -> None:
+    """Test manager_level_classes"""
+
+    managerlvl_uuids = [
+        UUID("afc5077b-bea5-4873-806e-6129d48be765"),
+        UUID("dcd3f94b-dff5-4729-86df-a9dfc037b078"),
+    ]
+    managerlvl_str = list(map(str, managerlvl_uuids))
+
+    MANAGERLEVEL_QUERY = gql(
+        """
+        query ($uuids: [UUID!]!){
+            classes (uuids: $uuids){
+                uuid
+            }
+        }
+    """
+    )
+
+    mock_query_graphql.return_value = {
+        "classes": [{"uuid": "afc5077b-bea5-4873-806e-6129d48be765"}]
+    }
+
+    returned_data = await check_manager_level_classes(gql_client, managerlvl_uuids)
+
+    assert returned_data == ["dcd3f94b-dff5-4729-86df-a9dfc037b078"]
+
+    mock_query_graphql.assert_awaited_once_with(
+        gql_client, MANAGERLEVEL_QUERY, {"uuids": managerlvl_str}
+    )
+
+
+@patch("sd_managerscript.holstebro_managers.query_graphql")
+async def test_create_class(
+    mock_query_graphql: AsyncMock,
+    gql_client: MagicMock,
+) -> None:
+    """Test create class"""
+
+    missing_class = {
+        "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+        "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+        "name": "Chef",
+    }
+
+    uuid = "a8754726-a4b9-1715-6b41-769c6fe703c5"
+
+    MANAGERLEVEL_CREATE = gql(
+        """
+        mutation ($input: ClassCreateInput!){
+            class_create (input: $input){
+                uuid
+            }
+        }
+    """
+    )
+
+    missing_class["uuid"] = uuid
+    missing_class["user_key"] = missing_class["name"]
+    payload = {"input": missing_class}
+
+    await create_class(gql_client, missing_class, UUID(uuid))
+
+    mock_query_graphql.assert_awaited_once_with(
+        gql_client, MANAGERLEVEL_CREATE, payload
+    )

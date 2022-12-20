@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     manager_level_mapping: list = Field(
         description="Mapping dict from org-unit level to manager level"
     )
+    manager_level_create: list = Field(
+        description="Dict with data for creating manager-level classes"
+    )
 
 
 @cache

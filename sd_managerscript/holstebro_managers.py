@@ -25,6 +25,8 @@ from .queries import ASSOCIATION_TERMINATE
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
 from .queries import MANAGER_TERMINATE
+from .queries import MANAGERLEVEL_CREATE
+from .queries import MANAGERLEVEL_QUERY
 from .queries import QUERY_ENGAGEMENTS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
@@ -554,11 +556,60 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
+async def check_manager_level_classes(
+    gql_client: PersistentGraphQLClient, manager_level_uuids: list[UUID]
+) -> list[str]:
+    """
+    Checks all managerlevel classes exists
+
+    Args:
+        gql_client: GraphQL client
+        manager_level_uuids: list of manager_level class UUIDS we need to verify exists in system
+    Returns:
+        filter of UUIDS of the classes we need to create, hence they didn't exist in system
+    """
+    manager_levels = list(map(str, manager_level_uuids))
+    data = await query_graphql(
+        gql_client, MANAGERLEVEL_QUERY, {"uuids": manager_levels}
+    )
+    found_uuids = [managerlvl.get("uuid") for managerlvl in data.get("classes", [])]
+    return list(filter(lambda uuid: uuid not in found_uuids, manager_levels))
+
+
+async def create_class(
+    gql_client: PersistentGraphQLClient, missing_class: dict[str, str], uuid: UUID
+) -> None:
+    """
+    Creates missing managerlevel classes
+    Args:
+        gql_client: GraphQL client
+        missing_class: UUID of managerlevel class that needs to be created
+    Returns:
+        Nothing
+    """
+    missing_class["uuid"] = str(uuid)
+    missing_class["user_key"] = missing_class["name"]
+    variables = {"input": missing_class}
+
+    await query_graphql(gql_client, MANAGERLEVEL_CREATE, variables)
+
+
 async def update_mo_managers(
     gql_client: PersistentGraphQLClient, root_uuid: UUID
 ) -> None:
     """Main function for selecting and updating managers"""
 
+    logger.msg("Checking all managerlevel classes exists...")
+    manager_level_uuids = list(one(get_settings().manager_level_create).keys())
+
+    missing_classes = await check_manager_level_classes(gql_client, manager_level_uuids)
+
+    for uuid in missing_classes:
+        await create_class(
+            gql_client, one(get_settings().manager_level_create)[uuid], UUID(uuid)
+        )
+
+    assert 1 == 0
     logger.msg("Getting root-org...")
     variables = {"uuids": str(root_uuid)}
     root_org_unit = await query_graphql(gql_client, QUERY_ROOT_ORG_UNIT, variables)

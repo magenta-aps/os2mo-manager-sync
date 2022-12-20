@@ -24,9 +24,35 @@ ENV_MANAGER_LEVEL_MAPPING = """
     }]
     """
 
+ENV_MANAGER_LEVEL_CREATE = """
+    [{
+          "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c": {
+            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+            "name": "Kommunal Direktør"
+          },
+          "e226821b-4af3-1e91-c53f-ea5c57c6d8d0": {
+            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+            "name": "Direktør"
+          },
+          "a8754726-a4b9-1715-6b41-769c6fe703c5": {
+            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+            "name": "Chef"
+          },
+          "9ffaff0f-8b6e-6e99-a517-f841a04c61c2": {
+            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
+            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
+            "name": "Leder"
+          }
+    }]
+"""
+
 mp = MonkeyPatch()
 mp.setenv("ROOT_UUID", ENV_ROOT_UUID)
 mp.setenv("CLIENT_SECRET", ENV_CLIENT_SECRET)
 mp.setenv("MANAGER_TYPE_UUID", ENV_MANAGER_TYPE_UUID)
 mp.setenv("RESPONSIBILITY_UUID", ENV_RESPONSIBILITY_UUID)
 mp.setenv("MANAGER_LEVEL_MAPPING", ENV_MANAGER_LEVEL_MAPPING)
+mp.setenv("MANAGER_LEVEL_CREATE", ENV_MANAGER_LEVEL_CREATE)

@@ -14,7 +14,7 @@ variables:
   IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
 
   RELEASE_REGISTRY: docker.io
-  RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mo-sd-to-mo-manager-update
+  RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mo-manager-sync
 
   PYTEST_COV_MODULE: sd_managerscript
   PYTEST_COV_FAIL_UNDER: 80

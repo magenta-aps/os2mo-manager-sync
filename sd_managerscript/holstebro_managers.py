@@ -560,13 +560,14 @@ async def check_manager_level_classes(
     gql_client: PersistentGraphQLClient, manager_level_uuids: list[UUID]
 ) -> list[str]:
     """
-    Checks all managerlevel classes exists
+    Check if all manager level classes exist and return a list of the potentially
+    missing manager level classes.
 
     Args:
         gql_client: GraphQL client
-        manager_level_uuids: list of manager_level class UUIDS we need to verify exists in system
+        manager_level_uuids: list of manager_level class UUIDs we need to verify exist.
     Returns:
-        filter of UUIDS of the classes we need to create, hence they didn't exist in system
+        List of UUIDs of the classes we need to create, hence they didn't exist in system
     """
     manager_levels = list(map(str, manager_level_uuids))
     data = await query_graphql(

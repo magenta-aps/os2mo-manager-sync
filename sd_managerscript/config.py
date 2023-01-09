@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         description="Mapping dict from org-unit level to manager level"
     )
     manager_level_create: list = Field(
-        description="Dict with data for creating manager-level classes"
+        description="List of dicts with data for creating manager-level classes"
     )
 
 

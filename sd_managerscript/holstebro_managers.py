@@ -584,7 +584,8 @@ async def create_class(
     Creates missing managerlevel classes
     Args:
         gql_client: GraphQL client
-        missing_class: UUID of managerlevel class that needs to be created
+        missing_class: GraphQL input dict for creating class
+        uuid: UUID of manager level class that needs to be created
     Returns:
         Nothing
     """

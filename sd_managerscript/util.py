@@ -11,7 +11,7 @@ from .models import OrgUnitManagers  # type: ignore
 @no_type_check
 async def query_graphql(
     gql_client: PersistentGraphQLClient, query: str, variables: dict
-) -> dict[str, list]:
+) -> dict[str, list] | dict[str, dict]:
     """Graphql query. Returns List[Dict]
 
     Args:

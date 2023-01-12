@@ -16,6 +16,7 @@ from ramodels.mo._shared import Validity  # type: ignore
 
 from .config import get_settings
 from .exceptions import ConflictingManagers
+from .init import get_missing_manager_level_classes
 from .models import EngagementFrom
 from .models import Manager
 from .models import ManagerLevel
@@ -26,7 +27,6 @@ from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
 from .queries import MANAGER_TERMINATE
 from .queries import MANAGERLEVEL_CREATE
-from .queries import MANAGERLEVEL_QUERY
 from .queries import QUERY_ENGAGEMENTS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
@@ -554,32 +554,6 @@ async def create_update_manager(
         # it's parent org-unit will also have the manager assigned
         if org_unit.parent.name.strip()[-7:] == "led-adm":
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
-
-
-async def get_missing_manager_level_classes(
-    gql_client: PersistentGraphQLClient, manager_level_uuids: list[UUID]
-) -> list[UUID]:
-    """
-    Check if all manager level classes exist and return a list of the potentially
-    missing manager level classes.
-
-    Args:
-        gql_client: GraphQL client
-        manager_level_uuids: list of manager_level class UUIDs we need to verify exist.
-    Returns:
-        List of UUIDs of the classes we need to create, hence they didn't exist in system
-    """
-    manager_levels = list(map(str, manager_level_uuids))
-
-    r = await query_graphql(
-        gql_client, MANAGERLEVEL_QUERY, {"uuids": manager_levels}
-    )
-
-    existing_class_uuids = map(lambda _class: _class["uuid"], r.get("classes", []))
-    missing_class_uuids_strings = filter(lambda uuid: uuid not in existing_class_uuids, manager_levels)
-    missing_class_uuids = map(UUID, missing_class_uuids_strings)
-
-    return list(missing_class_uuids)
 
 
 async def create_class(

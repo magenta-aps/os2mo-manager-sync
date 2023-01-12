@@ -12,7 +12,7 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
-
+from .init import get_organisation
 
 logger = structlog.get_logger()
 
@@ -61,6 +61,9 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             gql_client = construct_client(settings)
             context["gql_client"] = await stack.enter_async_context(gql_client)
             context["root_uuid"] = settings.root_uuid
+
+            print(await get_organisation(gql_client))
+
             yield
 
     app.router.lifespan_context = lifespan

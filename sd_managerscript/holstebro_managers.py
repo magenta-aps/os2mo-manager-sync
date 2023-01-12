@@ -16,7 +16,7 @@ from ramodels.mo._shared import Validity  # type: ignore
 
 from .config import get_settings
 from .exceptions import ConflictingManagers
-from .init import get_missing_manager_level_classes
+from .init import get_missing_manager_level_classes_and_facet_uuid
 from .models import EngagementFrom
 from .models import Manager
 from .models import ManagerLevel
@@ -583,7 +583,7 @@ async def update_mo_managers(
     logger.msg("Checking all managerlevel classes exists...")
     manager_level_uuids = list(one(get_settings().manager_level_create).keys())
 
-    missing_classes = await get_missing_manager_level_classes(gql_client, manager_level_uuids)
+    missing_classes = await get_missing_manager_level_classes_and_facet_uuid(gql_client, manager_level_uuids)
 
     for uuid in missing_classes:
         await create_class(

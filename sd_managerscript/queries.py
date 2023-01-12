@@ -184,7 +184,7 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
 )
 
 
-MANAGERLEVEL_QUERY = gql(
+MANAGER_LEVEL_QUERY = gql(
     """
         query ($uuids: [UUID!]!){
             classes (uuids: $uuids){

@@ -12,7 +12,8 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
-from .init import get_organisation, get_facet_uuid
+from .init import get_organisation, get_facet_uuid, \
+    get_missing_manager_level_classes_and_facet_uuid
 
 logger = structlog.get_logger()
 
@@ -64,6 +65,10 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
 
             print(await get_organisation(gql_client))
             print(await get_facet_uuid(gql_client, "manager_level"))
+            print(await get_missing_manager_level_classes_and_facet_uuid(
+                gql_client,
+                ["Niveau 1", "Niveau 2", "Niveau 3", "Niveau 4", "Niveau 5"]
+            ))
 
             yield
 

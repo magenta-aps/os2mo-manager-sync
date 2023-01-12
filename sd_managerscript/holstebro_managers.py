@@ -570,11 +570,13 @@ async def get_missing_manager_level_classes(
         List of UUIDs of the classes we need to create, hence they didn't exist in system
     """
     manager_levels = list(map(str, manager_level_uuids))
-    data = await query_graphql(
+
+    r = await query_graphql(
         gql_client, MANAGERLEVEL_QUERY, {"uuids": manager_levels}
     )
-    found_uuids = [managerlvl.get("uuid") for managerlvl in data.get("classes", [])]
-    missing_class_uuids_strings = filter(lambda uuid: uuid not in found_uuids, manager_levels)
+
+    existing_class_uuids = map(lambda _class: _class["uuid"], r.get("classes", []))
+    missing_class_uuids_strings = filter(lambda uuid: uuid not in existing_class_uuids, manager_levels)
     missing_class_uuids = map(UUID, missing_class_uuids_strings)
 
     return list(missing_class_uuids)

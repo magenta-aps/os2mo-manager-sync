@@ -462,7 +462,7 @@ async def test_manager_level_classes(
 
     returned_data = await get_missing_manager_level_classes(gql_client, managerlvl_uuids)
 
-    assert returned_data == ["dcd3f94b-dff5-4729-86df-a9dfc037b078"]
+    assert returned_data == [UUID("dcd3f94b-dff5-4729-86df-a9dfc037b078")]
 
     mock_query_graphql.assert_awaited_once_with(
         gql_client, MANAGERLEVEL_QUERY, {"uuids": managerlvl_str}

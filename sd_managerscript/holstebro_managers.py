@@ -558,7 +558,7 @@ async def create_update_manager(
 
 async def get_missing_manager_level_classes(
     gql_client: PersistentGraphQLClient, manager_level_uuids: list[UUID]
-) -> list[str]:
+) -> list[UUID]:
     """
     Check if all manager level classes exist and return a list of the potentially
     missing manager level classes.
@@ -574,7 +574,10 @@ async def get_missing_manager_level_classes(
         gql_client, MANAGERLEVEL_QUERY, {"uuids": manager_levels}
     )
     found_uuids = [managerlvl.get("uuid") for managerlvl in data.get("classes", [])]
-    return list(filter(lambda uuid: uuid not in found_uuids, manager_levels))
+    missing_class_uuids_strings = filter(lambda uuid: uuid not in found_uuids, manager_levels)
+    missing_class_uuids = map(UUID, missing_class_uuids_strings)
+
+    return list(missing_class_uuids)
 
 
 async def create_class(

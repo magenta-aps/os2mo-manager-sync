@@ -13,7 +13,6 @@ QUERY_FACET = gql(
     query ($user_key: [String!]){
         facets (user_keys: $user_key) {
             uuid
-            user_key
         }
     }
     """

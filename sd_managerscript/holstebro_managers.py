@@ -556,7 +556,7 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
-async def check_manager_level_classes(
+async def get_missing_manager_level_classes(
     gql_client: PersistentGraphQLClient, manager_level_uuids: list[UUID]
 ) -> list[str]:
     """
@@ -604,7 +604,7 @@ async def update_mo_managers(
     logger.msg("Checking all managerlevel classes exists...")
     manager_level_uuids = list(one(get_settings().manager_level_create).keys())
 
-    missing_classes = await check_manager_level_classes(gql_client, manager_level_uuids)
+    missing_classes = await get_missing_manager_level_classes(gql_client, manager_level_uuids)
 
     for uuid in missing_classes:
         await create_class(

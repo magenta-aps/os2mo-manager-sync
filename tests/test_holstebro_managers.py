@@ -16,7 +16,6 @@ from gql import gql  # type: ignore
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.holstebro_managers import check_manager_engagement
-from sd_managerscript.holstebro_managers import get_missing_manager_level_classes
 from sd_managerscript.holstebro_managers import create_class
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
@@ -33,7 +32,6 @@ from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
-from sd_managerscript.queries import MANAGERLEVEL_QUERY
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_create_update_manager_data
@@ -433,32 +431,6 @@ async def test_create_update_manager_led_adm(
     await create_update_manager(gql_client, org_unit)
 
     mock_update_manager.assert_has_calls(calls, any_order=True)
-
-
-async def test_manager_level_classes() -> None:
-    """Test manager_level_classes"""
-
-    # Arrange
-    mock_gql_client = AsyncMock()
-    mock_execute = AsyncMock(return_value={
-        "classes": [{"uuid": "afc5077b-bea5-4873-806e-6129d48be765"}]
-    })
-    mock_gql_client.execute = mock_execute
-
-    manager_level_uuids = [
-        UUID("afc5077b-bea5-4873-806e-6129d48be765"),
-        UUID("dcd3f94b-dff5-4729-86df-a9dfc037b078"),
-    ]
-    manager_level_str = list(map(str, manager_level_uuids))
-
-    # Act
-    returned_data = await get_missing_manager_level_classes(mock_gql_client, manager_level_uuids)
-
-    # Assert
-    assert returned_data == [UUID("dcd3f94b-dff5-4729-86df-a9dfc037b078")]
-    mock_execute.assert_awaited_once_with(
-        MANAGERLEVEL_QUERY, variable_values={"uuids": manager_level_str}
-    )
 
 
 @patch("sd_managerscript.holstebro_managers.query_graphql")

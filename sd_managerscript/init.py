@@ -7,7 +7,6 @@ from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient
 
 from .queries import QUERY_ORG, MANAGERLEVEL_QUERY
-from .util import query_graphql
 
 QUERY_FACET = gql(
     """

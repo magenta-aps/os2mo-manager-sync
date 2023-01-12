@@ -6,7 +6,7 @@ from uuid import uuid4, UUID
 from gql import gql
 
 from sd_managerscript.init import get_organisation, get_facet_uuid, \
-    get_missing_manager_level_classes_and_facet_uuid, QUERY_MANAGER_CLASSES
+    get_manager_level_facet_and_classes, QUERY_MANAGER_CLASSES
 from sd_managerscript.queries import MANAGER_LEVEL_QUERY
 
 
@@ -37,7 +37,7 @@ async def test_get_facet_uuid():
     assert _uuid == facet_uuid
 
 
-async def test_get_missing_manager_level_classes() -> None:
+async def test_get_manager_level_facet_and_classes() -> None:
     # Arrange
     mock_gql_client = AsyncMock()
     mock_execute = AsyncMock(return_value={
@@ -54,12 +54,9 @@ async def test_get_missing_manager_level_classes() -> None:
     })
     mock_gql_client.execute = mock_execute
 
-    manager_levels = ["Niveau 1", "Niveau 2", "Niveau 3", "Niveau 4", "Niveau 5"]
-
     # Act
-    returned_data = await get_missing_manager_level_classes_and_facet_uuid(mock_gql_client, manager_levels)
-    print(returned_data)
+    returned_data = await get_manager_level_facet_and_classes(mock_gql_client)
 
     # Assert
-    assert returned_data == (["Niveau 4", "Niveau 5"], UUID("35d5d061-5d19-4584-8c5e-796309b87dfb"))
+    assert returned_data == (UUID("35d5d061-5d19-4584-8c5e-796309b87dfb"), ["Niveau 1", "Niveau 2", "Niveau 3"])
     mock_execute.assert_awaited_once_with(QUERY_MANAGER_CLASSES)

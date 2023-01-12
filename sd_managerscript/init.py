@@ -48,9 +48,9 @@ QUERY_MANAGER_CLASSES = gql(
 )
 
 
-async def get_missing_manager_level_classes_and_facet_uuid(
-    gql_client: PersistentGraphQLClient, manager_levels: list[str]
-) -> (list[str], UUID):
+async def get_manager_level_facet_and_classes(
+    gql_client: PersistentGraphQLClient
+) -> (UUID, list[str]):
     """
     Check if all manager level classes exist and return a list of the potentially
     missing manager level classes.
@@ -66,7 +66,7 @@ async def get_missing_manager_level_classes_and_facet_uuid(
 
     facet = one(r["facets"])
     classes = facet.get("classes", [])
-    existing_class_names = tuple(map(lambda _class: _class["name"], classes))
-    missing_class_names = list(filter(lambda name: name not in existing_class_names, manager_levels))
+    existing_class_names = list(map(lambda _class: _class["name"], classes))
+    #missing_class_names = list(filter(lambda name: name not in existing_class_names, manager_levels))
 
-    return missing_class_names, UUID(facet["uuid"])
+    return UUID(facet["uuid"]), existing_class_names

@@ -13,7 +13,7 @@ from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
 from .init import get_organisation, get_facet_uuid, \
-    get_manager_level_facet_and_classes
+    get_manager_level_facet_and_classes, create_manager_level
 
 logger = structlog.get_logger()
 
@@ -63,12 +63,12 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             context["gql_client"] = await stack.enter_async_context(gql_client)
             context["root_uuid"] = settings.root_uuid
 
-            print(await get_organisation(gql_client))
-            print(await get_facet_uuid(gql_client, "manager_level"))
-            print(await get_manager_level_facet_and_classes(
-                gql_client,
-                ["Niveau 1", "Niveau 2", "Niveau 3", "Niveau 4", "Niveau 5"]
-            ))
+            org_uuid = await get_organisation(gql_client)
+            print(repr(org_uuid))
+            facet_uuid, class_names = await get_manager_level_facet_and_classes(gql_client)
+            print(facet_uuid, class_names)
+            u = await create_manager_level(gql_client, facet_uuid, "Hurra", org_uuid, "hurra")
+            print(u)
 
             yield
 

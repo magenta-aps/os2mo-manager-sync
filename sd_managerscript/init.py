@@ -6,7 +6,7 @@ from gql import gql
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient
 
-from .queries import QUERY_ORG, MANAGER_LEVEL_QUERY
+from .queries import QUERY_ORG, MANAGER_LEVEL_QUERY, MANAGERLEVEL_CREATE
 
 
 async def get_organisation(gql_client: PersistentGraphQLClient) -> UUID:
@@ -70,3 +70,22 @@ async def get_manager_level_facet_and_classes(
     #missing_class_names = list(filter(lambda name: name not in existing_class_names, manager_levels))
 
     return UUID(facet["uuid"]), existing_class_names
+
+
+async def create_manager_level(
+    gql_client: PersistentGraphQLClient,
+    facet_uuid: UUID,
+    name: str,
+    org_uuid: UUID,
+    user_key: str
+) -> UUID:
+    r = await gql_client.execute(MANAGERLEVEL_CREATE, variable_values={
+        "input": {
+            "facet_uuid": str(facet_uuid),
+            "name": name,
+            "org_uuid": str(org_uuid),
+            "user_key": user_key
+        }
+    })
+
+    return UUID(r["class_create"]["uuid"])

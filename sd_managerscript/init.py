@@ -77,15 +77,20 @@ async def create_manager_level(
     facet_uuid: UUID,
     name: str,
     org_uuid: UUID,
-    user_key: str
+    user_key: str,
+    uuid: UUID | None = None
 ) -> UUID:
-    r = await gql_client.execute(MANAGERLEVEL_CREATE, variable_values={
-        "input": {
-            "facet_uuid": str(facet_uuid),
-            "name": name,
-            "org_uuid": str(org_uuid),
-            "user_key": user_key
-        }
-    })
+    gql_input = {
+        "facet_uuid": str(facet_uuid),
+        "name": name,
+        "org_uuid": str(org_uuid),
+        "user_key": user_key
+    }
+    if uuid is not None:
+        gql_input["uuid"] = str(uuid)
 
+    r = await gql_client.execute(MANAGERLEVEL_CREATE, variable_values={
+        "input": gql_input
+    })
+    print(repr(r))
     return UUID(r["class_create"]["uuid"])

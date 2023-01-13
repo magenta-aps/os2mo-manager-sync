@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from contextlib import AsyncExitStack
 from typing import Any
+from uuid import UUID
 
 import structlog
 from fastapi import FastAPI
@@ -67,7 +68,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             print(repr(org_uuid))
             facet_uuid, class_names = await get_manager_level_facet_and_classes(gql_client)
             print(facet_uuid, class_names)
-            u = await create_manager_level(gql_client, facet_uuid, "Hurra", org_uuid, "hurra")
+            u = await create_manager_level(gql_client, facet_uuid, "Hurra", org_uuid, "hurra", UUID("00000000-0000-0000-0000-111111111111"))
             print(u)
 
             yield

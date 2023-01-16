@@ -11,6 +11,8 @@ from pydantic import Field
 from pydantic import parse_obj_as
 from pydantic import SecretStr
 
+from .init import ManagerLevel
+
 logger = structlog.get_logger()
 
 
@@ -39,9 +41,7 @@ class Settings(BaseSettings):
     manager_level_mapping: list = Field(
         description="Mapping dict from org-unit level to manager level"
     )
-    manager_level_create: list = Field(
-        description="List of dicts with data for creating manager-level classes"
-    )
+    manager_level_create: list[ManagerLevel]
 
 
 @cache

@@ -32,29 +32,28 @@ services:
         "fc968d00-41f2-3efb-401a-30a3cf854227": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2",
         "750e734e-17b8-0174-6787-a5be55adca31": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2",
         "3ee6f4a5-02cc-41a0-82cc-4b8243664423": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2" }]'
-      MANAGER_LEVEL_CREATE: '[{
-          "b352fff5-c6ef-4efa-b9fc-7e738bee6b9f": {
-            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
-            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
-            "name": "Kommunal Direktør"
-          },
-          "e226821b-4af3-1e91-c53f-ea5c57c6d8d0": {
-            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
-            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
-            "name": "Direktør"
-          },
-          "a8754726-a4b9-1715-6b41-769c6fe703c5": {
-            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
-            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
-            "name": "Chef"
-          },
-          "9ffaff0f-8b6e-6e99-a517-f841a04c61c2": {
-            "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
-            "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
-            "name": "Leder"
-          }
-        }]'
-
+      MANAGER_LEVEL_CREATE: '[
+            {
+                "uuid": "b352fff5-c6ef-4efa-b9fc-7e738bee6b9f",
+                "name": "Kommunal Direktør",
+                "user_key": "manager_municipality_director"
+            },
+            {
+                "uuid": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0",
+                "name": "Direktør",
+                "user_key": "manager_1030"
+            },
+            {
+                "uuid": "a8754726-a4b9-1715-6b41-769c6fe703c5",
+                "name": "Chef",
+                "user_key": "manager_1035"
+            },
+            {
+                "uuid": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2",
+                "name": "Leder",
+                "user_key": "manager_1040"
+            }
+        ]'
     networks:
       - os2mo_default
     ports:

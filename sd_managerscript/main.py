@@ -4,7 +4,6 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from contextlib import AsyncExitStack
 from typing import Any
-from uuid import UUID
 
 import structlog
 from fastapi import FastAPI
@@ -13,8 +12,7 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
-from .init import get_organisation, get_facet_uuid, \
-    get_manager_level_facet_and_classes, create_manager_level
+from .init import create_missing_manager_levels
 
 logger = structlog.get_logger()
 
@@ -64,12 +62,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             context["gql_client"] = await stack.enter_async_context(gql_client)
             context["root_uuid"] = settings.root_uuid
 
-            org_uuid = await get_organisation(gql_client)
-            print(repr(org_uuid))
-            facet_uuid, class_names = await get_manager_level_facet_and_classes(gql_client)
-            print(facet_uuid, class_names)
-            u = await create_manager_level(gql_client, facet_uuid, "Hurra", org_uuid, "hurra", UUID("00000000-0000-0000-0000-111111111111"))
-            print(u)
+            await create_missing_manager_levels(gql_client, settings.manager_level_create)
 
             yield
 

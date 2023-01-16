@@ -556,41 +556,11 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
-async def create_class(
-    gql_client: PersistentGraphQLClient, missing_class: dict[str, str], uuid: UUID
-) -> None:
-    """
-    Creates missing managerlevel classes
-    Args:
-        gql_client: GraphQL client
-        missing_class: GraphQL input dict for creating class
-        uuid: UUID of manager level class that needs to be created
-    Returns:
-        Nothing
-    """
-    missing_class["uuid"] = str(uuid)
-    missing_class["user_key"] = missing_class["name"]
-    variables = {"input": missing_class}
-
-    await query_graphql(gql_client, MANAGERLEVEL_CREATE, variables)
-
-
 async def update_mo_managers(
     gql_client: PersistentGraphQLClient, root_uuid: UUID
 ) -> None:
     """Main function for selecting and updating managers"""
 
-    logger.msg("Checking all managerlevel classes exists...")
-    manager_level_uuids = list(one(get_settings().manager_level_create).keys())
-
-    missing_classes = await get_manager_level_facet_and_classes(gql_client, manager_level_uuids)
-
-    for uuid in missing_classes:
-        await create_class(
-            gql_client, one(get_settings().manager_level_create)[uuid], UUID(uuid)
-        )
-
-    assert 1 == 0
     logger.msg("Getting root-org...")
     variables = {"uuids": str(root_uuid)}
     root_org_unit = await query_graphql(gql_client, QUERY_ROOT_ORG_UNIT, variables)

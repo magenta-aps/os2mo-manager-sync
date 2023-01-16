@@ -16,7 +16,6 @@ from gql import gql  # type: ignore
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.holstebro_managers import check_manager_engagement
-from sd_managerscript.holstebro_managers import create_class
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
 from sd_managerscript.holstebro_managers import filter_managers
@@ -431,39 +430,3 @@ async def test_create_update_manager_led_adm(
     await create_update_manager(gql_client, org_unit)
 
     mock_update_manager.assert_has_calls(calls, any_order=True)
-
-
-@patch("sd_managerscript.holstebro_managers.query_graphql")
-async def test_create_class(
-    mock_query_graphql: AsyncMock,
-    gql_client: MagicMock,
-) -> None:
-    """Test create class"""
-
-    missing_class = {
-        "org_uuid": "3b866d97-0b1f-48e0-8078-686d96f430b3",
-        "facet_uuid": "f4c55d37-63a4-4299-95fa-ee7ff7e0d0d8",
-        "name": "Chef",
-    }
-
-    uuid = "a8754726-a4b9-1715-6b41-769c6fe703c5"
-
-    MANAGERLEVEL_CREATE = gql(
-        """
-        mutation ($input: ClassCreateInput!){
-            class_create (input: $input){
-                uuid
-            }
-        }
-    """
-    )
-
-    missing_class["uuid"] = uuid
-    missing_class["user_key"] = missing_class["name"]
-    payload = {"input": missing_class}
-
-    await create_class(gql_client, missing_class, UUID(uuid))
-
-    mock_query_graphql.assert_awaited_once_with(
-        gql_client, MANAGERLEVEL_CREATE, payload
-    )

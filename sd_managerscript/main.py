@@ -62,7 +62,9 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             context["gql_client"] = await stack.enter_async_context(gql_client)
             context["root_uuid"] = settings.root_uuid
 
-            await create_missing_manager_levels(gql_client, settings.manager_level_create)
+            await create_missing_manager_levels(
+                gql_client, settings.manager_level_create
+            )
 
             yield
 

@@ -16,7 +16,6 @@ from ramodels.mo._shared import Validity  # type: ignore
 
 from .config import get_settings
 from .exceptions import ConflictingManagers
-from .init import get_manager_level_facet_and_classes
 from .models import EngagementFrom
 from .models import Manager
 from .models import ManagerLevel
@@ -26,7 +25,6 @@ from .queries import ASSOCIATION_TERMINATE
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
 from .queries import MANAGER_TERMINATE
-from .queries import MANAGERLEVEL_CREATE
 from .queries import QUERY_ENGAGEMENTS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL

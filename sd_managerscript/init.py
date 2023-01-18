@@ -8,7 +8,8 @@ from more_itertools import one
 from pydantic import BaseModel
 from raclients.graph.client import PersistentGraphQLClient
 
-from .queries import QUERY_ORG, MANAGERLEVEL_CREATE
+from .queries import MANAGERLEVEL_CREATE
+from .queries import QUERY_ORG
 
 
 logger = structlog.get_logger()
@@ -18,6 +19,7 @@ class ManagerLevel(BaseModel):
     """
     Model used to load mandatory manager levels from the ENV
     """
+
     name: str
     user_key: str
     uuid: UUID | None = None
@@ -54,7 +56,7 @@ QUERY_MANAGER_CLASSES = gql(
 
 
 async def get_manager_level_facet_and_classes(
-    gql_client: PersistentGraphQLClient
+    gql_client: PersistentGraphQLClient,
 ) -> (UUID, list[str]):
     """
     Get the UUID of the manager level facet and all the corresponding manager level
@@ -76,7 +78,7 @@ async def get_manager_level_facet_and_classes(
     logger.info(
         "Manager level facet and classes",
         uuid=UUID(facet["uuid"]),
-        existing_class_names=existing_class_names
+        existing_class_names=existing_class_names,
     )
 
     return UUID(facet["uuid"]), existing_class_names
@@ -88,7 +90,7 @@ async def create_manager_level(
     name: str,
     org_uuid: UUID,
     user_key: str,
-    uuid: UUID | None = None
+    uuid: UUID | None = None,
 ) -> UUID:
     """
     Create a manager level class in MO.
@@ -108,14 +110,14 @@ async def create_manager_level(
         "facet_uuid": str(facet_uuid),
         "name": name,
         "org_uuid": str(org_uuid),
-        "user_key": user_key
+        "user_key": user_key,
     }
     if uuid is not None:
         gql_input["uuid"] = str(uuid)
 
-    r = await gql_client.execute(MANAGERLEVEL_CREATE, variable_values={
-        "input": gql_input
-    })
+    r = await gql_client.execute(
+        MANAGERLEVEL_CREATE, variable_values={"input": gql_input}
+    )
     uuid = UUID(r["class_create"]["uuid"])
     logger.info("Create manager level", name=name, user_key=user_key, uuid=uuid)
 
@@ -138,8 +140,14 @@ async def create_missing_manager_levels(
     logger.info("Creating missing manager levels...")
 
     org_uuid = await get_organisation(gql_client)
-    facet_uuid, existing_manager_levels = await get_manager_level_facet_and_classes(gql_client)
-    missing_manager_levels = list(filter(lambda ml: ml.name not in existing_manager_levels, mandatory_manager_levels))
+    facet_uuid, existing_manager_levels = await get_manager_level_facet_and_classes(
+        gql_client
+    )
+    missing_manager_levels = list(
+        filter(
+            lambda ml: ml.name not in existing_manager_levels, mandatory_manager_levels
+        )
+    )
     print(missing_manager_levels)
     for manager_level in missing_manager_levels:
         await create_manager_level(
@@ -148,7 +156,7 @@ async def create_missing_manager_levels(
             manager_level.name,
             org_uuid,
             manager_level.user_key,
-            manager_level.uuid
+            manager_level.uuid,
         )
 
     logger.info("Finished creating manager levels")

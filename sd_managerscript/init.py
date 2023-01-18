@@ -3,10 +3,10 @@
 from uuid import UUID
 
 import structlog
-from gql import gql
+from gql import gql  # type: ignore
 from more_itertools import one
 from pydantic import BaseModel
-from raclients.graph.client import PersistentGraphQLClient
+from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
 from .queries import MANAGERLEVEL_CREATE
 from .queries import QUERY_ORG
@@ -57,7 +57,7 @@ QUERY_MANAGER_CLASSES = gql(
 
 async def get_manager_level_facet_and_classes(
     gql_client: PersistentGraphQLClient,
-) -> (UUID, list[str]):
+) -> tuple[UUID, list[str]]:
     """
     Get the UUID of the manager level facet and all the corresponding manager level
     classes already existing in MO.
@@ -73,7 +73,7 @@ async def get_manager_level_facet_and_classes(
 
     facet = one(r["facets"])
     classes = facet.get("classes", [])
-    existing_class_names = list(map(lambda _class: _class["name"], classes))
+    existing_class_names = list(map(lambda _class: _class["name"], classes))  # type: ignore
 
     logger.info(
         "Manager level facet and classes",
@@ -125,7 +125,7 @@ async def create_manager_level(
 
 
 async def create_missing_manager_levels(
-    gql_client, mandatory_manager_levels: list[ManagerLevel]
+    gql_client: PersistentGraphQLClient, mandatory_manager_levels: list[ManagerLevel]
 ) -> None:
     """
     Create the missing manager level classes in MO, i.e. the manager

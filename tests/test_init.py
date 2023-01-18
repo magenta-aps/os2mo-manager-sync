@@ -4,6 +4,8 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 from uuid import uuid4
 
+from raclients.graph.client import PersistentGraphQLClient  # type: ignore
+
 from sd_managerscript.init import create_manager_level
 from sd_managerscript.init import create_missing_manager_levels
 from sd_managerscript.init import get_manager_level_facet_and_classes
@@ -14,7 +16,7 @@ from sd_managerscript.queries import MANAGERLEVEL_CREATE
 from tests.test_holstebro_managers import gql_client  # noqa: F401
 
 
-async def test_get_organisation():
+async def test_get_organisation() -> None:
     # Arrange
     org_uuid = uuid4()
     mock_gql_client = AsyncMock()
@@ -57,7 +59,9 @@ async def test_get_manager_level_facet_and_classes() -> None:
     mock_execute.assert_awaited_once_with(QUERY_MANAGER_CLASSES)
 
 
-async def test_create_manager_level(gql_client) -> None:  # noqa: F811
+async def test_create_manager_level(
+    gql_client: PersistentGraphQLClient,  # noqa: F811
+) -> None:  # noqa: F811
     # Arrange
     org_uuid = uuid4()
     facet_uuid = uuid4()
@@ -86,7 +90,9 @@ async def test_create_manager_level(gql_client) -> None:  # noqa: F811
     )
 
 
-async def test_create_manager_level_with_uuid(gql_client) -> None:  # noqa: F811
+async def test_create_manager_level_with_uuid(
+    gql_client: PersistentGraphQLClient,  # noqa: F811
+) -> None:
     # Arrange
     org_uuid = uuid4()
     facet_uuid = uuid4()

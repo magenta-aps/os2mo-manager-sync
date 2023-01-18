@@ -4,20 +4,71 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 ## SD MANAGER SYNC
+This repository contains the OS2mo manager script for updating managers in MO.
 
-***
-This repository contains the OS2MO manager script for updating managers. <br>Managers are updated based on data imported from SD-Løn prior to running this integration. <br>
+### Overview
+Managers are updated based on data imported from SD-Løn _prior_ to running this integration, i.e.
+the code does not make any calls to SD while running, but instead only updates managers
+based on the data already found in MO.
 
-It has two main goals: <br>
+The code has the following responsibilities:
 
-1. **Terminate managers with no active engagement in the org-unit they're allocated as manager. <br>**
-2. **Allocate new managers based on info in special child org-units with name ending in *"_leder"*. <br>**
+1. Create any missing manager level classes in MO based on configurations provided by 
+   environment variables.
+2. Terminate managers with no active engagement in the org unit where they are set
+   as manager.
+3. Assign new managers to org units based on info in special child org units
+   with name ending in "_leder".
+
+### Detailed Description
+This section describes how the code logic operates when the application is triggered.
+
+1. All current manager roles are checked to verify the employee has an active engagement in the organisation unit
+   they are placed. If not: manager role get terminated (manager roles end date set to today).
+2. For every organisation unit (org-unit) with `name` ending in `_leder` and name NOT prepended with `Ø_`:
+   ![_leder org-unit](readme_images/_leder.png  "_leder org-unit")
+   1. Get all employees with association to `_leder` unit.
+      ![Tilknytninger](readme_images/tilknytning.png  "Tilknytninger")</p>
+   2. Check each employee has an active engagement in parent org-unit. If more than
+      one employee with association in `_leder` org-unit, check which employee has
+      the latest `engagement from` date. The one with latest engagement date becomes
+      manager in parent org-unit.
+   3. The manger roles `manager_level` is based on the org-unit level in which
+      the manager role is assigned:
+      ![Manager level](readme_images/manager_level.png)
+   4. If the parent org-unit has `_led-adm` in its name, the manager will also become
+      manager of this org-units parent org-unit (Notice: Manager level is based
+      on org-unit level from the highest ranking org-unit).
+      ![led-adm](readme_images/_led-adm.png)
+      In the above illustration, manager fetched from `_leder` unit becomes manager
+      in not only "Byudvikling" but also "Borgmesterens Afdeling" as "Byudvikling is
+      marked as an `led-adm` unit. Manager level is then based on org-unit level
+      from "Borgmesterens Afdeling".
+   5. Once a manager has been selected based on above criteria, associations for all
+      other employees in `_leder` unit are terminated. Leaving just one association
+      in `_leder` unit.
 
 
+## Configuration
 
-***
+The follow environment variables can be used to configure the application:
+
+`MO_URL`:  Base URL for `OS2mo`
+<br>
+`CLIENT_ID`:  Login for this integration (dipex) client
+<br>
+`CLIENT SECRET`: Password for access to `OS2MO`
+<br>
+`ROOT_UUID`: UUID of the root organisation unit. Instance dependant.
+<br>
+`MANAGER_TYPE_UUID`: Default UUID for `Manager type`. Instance dependant.
+<br>
+`RESPONSIBILITY_UUID`: Default UUID for `Manager type`. Instance dependant.
+<br>
+`MANAGER_LEVEL_MAPPING`: Dict with `org-unit level UUID` classes as keys and `manager level UUID` as values. Used to map from `org_unit_level` to `manager_level`.
+
+
 ## Usage
-***
 
 If needed set enviromental variabels in `docker-compose.yaml` (More info on those further down)
 
@@ -44,55 +95,7 @@ sd_managerscript_1  | 2022-12-09 10:38.30 [info     ] Updating Managers
 sd_managerscript_1  | 2022-12-09 10:38.30 [info     ] Updating managers complete!
 
 ```
-***
-## Cycle rundown
-### This decribes the steps taken when script is triggered.
 
-
- * <span style="color:blue">**All current manager roles are checked to verify the employee has an active engagement in the organisation unit they are placed.**</span>
-    * **If not: manager role get terminated (manager roles end date set to today)**  <br><br>
-
- * <span style="color:blue">**For every organisation unit (org-unit) with `name` ending in `_leder` and name NOT prepended with `Ø_`**</span>
- <br><p align="center">
-     ![_leder org-unit](readme_images/_leder.png  "_leder org-unit") </p>
-    * <span style="color:blue">**Get all employees with association to `_leder` unit.**  <br>
-<p align="center">
-
-   ![Tilknytninger](readme_images/tilknytning.png  "Tilknytninger")</p>
-    <br>
-    * <span style="color:blue">**Check each employee has an active engagement in parent org-unit.**</span>
-    <br>
-    * <span style="color:blue">**If more than one employee with association in `_leder` org-unit, check which employee has the latest `engagement from` date. The one with latest engagement date becomes manager in parent org-unit.**</span> <br>
-    <br>
-    * <span style="color:blue">**The manger roles `manager level` is based on the org-unit level, in which the manager role is assigned at:**</span><br><br><p align="center">
-    ![Manager level](readme_images/manager_level.png  "Manager level")
-    <br></p>
-    * <span style="color:blue">**If parent org-unit has `_led-adm` in name the manager will also become leder of this org-units parent org-unit.**</span><br>
-    (Notice: Manager level is based on org-unit level from higeste ranking org-unit)
-    <br><p align="center">
-    ![led-adm](readme_images/_led-adm.png  "led-adm")
-    </p>
-    *In the above illustration, manager fetched from `_leder` unit becomes manager in not only "Byudvikling" but also "Borgmesterens Afdeling" as "Byudvikling is marked as an `led-adm` unit.
-  Manager level is then based on org-unit level from "Borgmesterens Afdeling"*
-  <br>
- * <span style="color:blue">**Once a manager has been selected based on above criterias, associations for all other employees in `_leder` unit are terminated.  <br>Leaving just one association in `_leder` unit.**</span>
-
-***
-## Enviromental Variables
-***
-`MO_URL`:  Base URL for `OS2MO`
-<br>
-`CLIENT_ID`:  Login for this integration (dipex) client
-<br>
-`CLIENT SECRET`: Password for access to `OS2MO`
-<br>
-`ROOT_UUID`: UUID of the root organisation unit. Instance dependant.
-<br>
-`MANAGER_TYPE_UUID`: Default UUID for `Manager type`. Instance dependant.
-<br>
-`RESPONSIBILITY_UUID`: Default UUID for `Manager type`. Instance dependant.
-<br>
-`MANAGER_LEVEL_MAPPING`: Dict with `org-unit level UUID` classes as keys and `manager level UUID` as values. Used to map from `org_unit_level` to `manager_level`.
 
 
 ***
@@ -162,7 +165,7 @@ Magenta ApS <https://magenta.dk>
 ***
 ## License
 
-This project uses: [MPL-2.0](MPL-2.0.txt)
+This project uses: [MPL-2.0](LICENSES/MPL-2.0.txt)
 
 This project uses [REUSE](https://reuse.software) for licensing.
-All licenses can be found in the [LICENSES folder](LICENSES/) of the project.
+All licenses can be found in the [LICENSES folder](LICENSES) of the project.

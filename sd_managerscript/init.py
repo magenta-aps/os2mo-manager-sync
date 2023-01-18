@@ -8,9 +8,30 @@ from more_itertools import one
 from pydantic import BaseModel
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
-from .queries import MANAGERLEVEL_CREATE
 from .queries import QUERY_ORG
 
+QUERY_MANAGER_CLASSES = gql(
+    """
+    query Facet {
+      facets(user_keys: "manager_level") {
+        classes {
+          name
+        }
+        uuid
+      }
+    }
+    """
+)
+
+MANAGER_LEVEL_CREATE = gql(
+    """
+        mutation ($input: ClassCreateInput!){
+            class_create (input: $input){
+                uuid
+            }
+        }
+    """
+)
 
 logger = structlog.get_logger()
 
@@ -39,20 +60,6 @@ async def get_organisation(gql_client: PersistentGraphQLClient) -> UUID:
     uuid = UUID(r["org"]["uuid"])
     logger.info("Got org UUID", uuid=uuid)
     return uuid
-
-
-QUERY_MANAGER_CLASSES = gql(
-    """
-    query Facet {
-      facets(user_keys: "manager_level") {
-        classes {
-          name
-        }
-        uuid
-      }
-    }
-    """
-)
 
 
 async def get_manager_level_facet_and_classes(
@@ -116,7 +123,7 @@ async def create_manager_level(
         gql_input["uuid"] = str(uuid)
 
     r = await gql_client.execute(
-        MANAGERLEVEL_CREATE, variable_values={"input": gql_input}
+        MANAGER_LEVEL_CREATE, variable_values={"input": gql_input}
     )
     uuid = UUID(r["class_create"]["uuid"])
     logger.info("Create manager level", name=name, user_key=user_key, uuid=uuid)

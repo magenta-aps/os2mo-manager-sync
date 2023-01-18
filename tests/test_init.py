@@ -10,9 +10,9 @@ from sd_managerscript.init import create_manager_level
 from sd_managerscript.init import create_missing_manager_levels
 from sd_managerscript.init import get_manager_level_facet_and_classes
 from sd_managerscript.init import get_organisation
+from sd_managerscript.init import MANAGER_LEVEL_CREATE
 from sd_managerscript.init import ManagerLevel
 from sd_managerscript.init import QUERY_MANAGER_CLASSES
-from sd_managerscript.queries import MANAGERLEVEL_CREATE
 from tests.test_holstebro_managers import gql_client  # noqa: F401
 
 
@@ -78,7 +78,7 @@ async def test_create_manager_level(
     # Assert
     assert class_uuid == create_manager_level_uuid
     mock_execute.assert_awaited_once_with(
-        MANAGERLEVEL_CREATE,
+        MANAGER_LEVEL_CREATE,
         variable_values={
             "input": {
                 "facet_uuid": str(facet_uuid),
@@ -109,7 +109,7 @@ async def test_create_manager_level_with_uuid(
     # Assert
     assert class_uuid == create_manager_level_uuid
     mock_execute.assert_awaited_once_with(
-        MANAGERLEVEL_CREATE,
+        MANAGER_LEVEL_CREATE,
         variable_values={
             "input": {
                 "facet_uuid": str(facet_uuid),
@@ -167,7 +167,7 @@ async def test_create_missing_manager_levels() -> None:
     assert 4 == mock_execute.await_count
 
     mock_execute.assert_any_await(
-        MANAGERLEVEL_CREATE,
+        MANAGER_LEVEL_CREATE,
         variable_values={
             "input": {
                 "facet_uuid": str(facet_uuid),
@@ -179,7 +179,7 @@ async def test_create_missing_manager_levels() -> None:
         },
     )
     mock_execute.assert_any_await(
-        MANAGERLEVEL_CREATE,
+        MANAGER_LEVEL_CREATE,
         variable_values={
             "input": {
                 "facet_uuid": str(facet_uuid),

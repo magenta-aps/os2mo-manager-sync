@@ -182,24 +182,3 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
         }
     """
 )
-
-
-MANAGER_LEVEL_QUERY = gql(
-    """
-        query ($uuids: [UUID!]!){
-            classes (uuids: $uuids){
-                uuid
-            }
-        }
-    """
-)
-
-MANAGERLEVEL_CREATE = gql(
-    """
-        mutation ($input: ClassCreateInput!){
-            class_create (input: $input){
-                uuid
-            }
-        }
-    """
-)

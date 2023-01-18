@@ -14,6 +14,7 @@ import pytest
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 
+from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.holstebro_managers import check_manager_engagement
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
@@ -180,8 +181,8 @@ async def test_filter_managers_error_raised(
 
     mock_get_active_engagements.side_effect = managers
 
-    with pytest.raises(Exception):
-        _ = await filter_managers(gql_client, org_unit)
+    with pytest.raises(ConflictingManagers):
+        await filter_managers(gql_client, org_unit)
 
 
 @pytest.mark.parametrize(

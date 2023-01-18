@@ -24,9 +24,35 @@ ENV_MANAGER_LEVEL_MAPPING = """
     }]
     """
 
+ENV_MANAGER_LEVEL_CREATE = """
+    [
+        {
+            "uuid": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
+            "name": "Kommunal Direktør",
+            "user_key": "manager_municipality_director"
+        },
+        {
+            "uuid": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0",
+            "name": "Direktør",
+            "user_key": "manager_1030"
+        },
+        {
+            "uuid": "a8754726-a4b9-1715-6b41-769c6fe703c5",
+            "name": "Chef",
+            "user_key": "manager_1035"
+        },
+        {
+            "uuid": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2",
+            "name": "Leder",
+            "user_key": "manager_1040"
+        }
+    ]
+"""
+
 mp = MonkeyPatch()
 mp.setenv("ROOT_UUID", ENV_ROOT_UUID)
 mp.setenv("CLIENT_SECRET", ENV_CLIENT_SECRET)
 mp.setenv("MANAGER_TYPE_UUID", ENV_MANAGER_TYPE_UUID)
 mp.setenv("RESPONSIBILITY_UUID", ENV_RESPONSIBILITY_UUID)
 mp.setenv("MANAGER_LEVEL_MAPPING", ENV_MANAGER_LEVEL_MAPPING)
+mp.setenv("MANAGER_LEVEL_CREATE", ENV_MANAGER_LEVEL_CREATE)

@@ -15,12 +15,24 @@ logger = structlog.get_logger()
 
 
 class ManagerLevel(BaseModel):
+    """
+    Model used to load mandatory manager levels from the ENV
+    """
     name: str
     user_key: str
     uuid: UUID | None = None
 
 
 async def get_organisation(gql_client: PersistentGraphQLClient) -> UUID:
+    """
+    Get the MO organisation.
+
+    Args:
+        gql_client: GraphQL client used to call MO
+    Returns:
+         UUID of the MO organisation
+    """
+
     r = await gql_client.execute(QUERY_ORG)
     uuid = UUID(r["org"]["uuid"])
     logger.info("Got org UUID", uuid=uuid)
@@ -45,14 +57,14 @@ async def get_manager_level_facet_and_classes(
     gql_client: PersistentGraphQLClient
 ) -> (UUID, list[str]):
     """
-    Check if all manager level classes exist and return a list of the potentially
-    missing manager level classes.
+    Get the UUID of the manager level facet and all the corresponding manager level
+    classes already existing in MO.
 
     Args:
-        gql_client: GraphQL client
-        manager_level_uuids: list of manager_level class UUIDs we need to verify exist.
+        gql_client: GraphQL client used to call MO
     Returns:
-        List of UUIDs of the classes we need to create, hence they didn't exist in system
+        Tuple containing the manager level facet UUID and a list of UUIDs of the
+        manager level classes in MO.
     """
 
     r = await gql_client.execute(QUERY_MANAGER_CLASSES)
@@ -78,6 +90,20 @@ async def create_manager_level(
     user_key: str,
     uuid: UUID | None = None
 ) -> UUID:
+    """
+    Create a manager level class in MO.
+
+    Args:
+        gql_client: GraphQL client used to call MO
+        facet_uuid: UUID of the manager level facet in MO
+        name: Name of the manager level class
+        org_uuid: UUID of the MO organisation
+        user_key: User key of the manager level class
+        uuid: UUID of the manager level class
+    Returns:
+        UUID of the created manager level class
+    """
+
     gql_input = {
         "facet_uuid": str(facet_uuid),
         "name": name,
@@ -99,6 +125,16 @@ async def create_manager_level(
 async def create_missing_manager_levels(
     gql_client, mandatory_manager_levels: list[ManagerLevel]
 ) -> None:
+    """
+    Create the missing manager level classes in MO, i.e. the manager
+    levels specificed in the ENV that do not already exist in MO.
+
+    Args:
+         gql_client: GraphQL client used to call MO
+         mandatory_manager_levels: The mandatory manager levels that
+           should exist in MO
+    """
+
     logger.info("Creating missing manager levels...")
 
     org_uuid = await get_organisation(gql_client)

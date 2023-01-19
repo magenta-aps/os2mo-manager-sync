@@ -13,7 +13,7 @@ based on the data already found in MO.
 
 The code has the following responsibilities:
 
-1. Create any missing manager level classes in MO based on configurations provided by 
+1. Create any missing manager level classes in MO based on configurations provided by
    environment variables.
 2. Terminate managers with no active engagement in the org unit where they are set
    as manager.
@@ -58,7 +58,7 @@ instead of being set via the environment...
 
 * `MO_URL`:  Base URL for MO
 * `CLIENT_ID`:  Keycloak client ID
-* `CLIENT_SECRET`: Keycloak client secret corresponding to the Keycloak client 
+* `CLIENT_SECRET`: Keycloak client secret corresponding to the Keycloak client
 * `ROOT_UUID`: UUID of the root organisation unit. Instance dependant.
 * `MANAGER_TYPE_UUID`: Default UUID for `Manager type`. Instance dependant.
 * `RESPONSIBILITY_UUID`: Default UUID for `Manager type`. Instance dependant.

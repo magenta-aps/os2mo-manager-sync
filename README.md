@@ -53,39 +53,36 @@ This section describes how the code logic operates when the application is trigg
 
 The follow environment variables can be used to configure the application:
 
-`MO_URL`:  Base URL for `OS2mo`
-<br>
-`CLIENT_ID`:  Login for this integration (dipex) client
-<br>
-`CLIENT SECRET`: Password for access to `OS2MO`
-<br>
-`ROOT_UUID`: UUID of the root organisation unit. Instance dependant.
-<br>
-`MANAGER_TYPE_UUID`: Default UUID for `Manager type`. Instance dependant.
-<br>
-`RESPONSIBILITY_UUID`: Default UUID for `Manager type`. Instance dependant.
-<br>
-`MANAGER_LEVEL_MAPPING`: Dict with `org-unit level UUID` classes as keys and `manager level UUID` as values. Used to map from `org_unit_level` to `manager_level`.
+TODO: some of the settings can possibly be retrieved from MO automatically
+instead of being set via the environment...
+
+* `MO_URL`:  Base URL for MO
+* `CLIENT_ID`:  Keycloak client ID
+* `CLIENT_SECRET`: Keycloak client secret corresponding to the Keycloak client 
+* `ROOT_UUID`: UUID of the root organisation unit. Instance dependant.
+* `MANAGER_TYPE_UUID`: Default UUID for `Manager type`. Instance dependant.
+* `RESPONSIBILITY_UUID`: Default UUID for `Manager type`. Instance dependant.
+* `MANAGER_LEVEL_MAPPING`: Dict with `org-unit level UUID` classes as keys and `manager level UUID` as values. Used to map from `org_unit_level` to `manager_level`.
 
 
 ## Usage
 
-If needed set enviromental variabels in `docker-compose.yaml` (More info on those further down)
+To start the container using `docker-compose`:
+```
+$ docker-compose up -d
+```
 
-To start the container using `docker-compose`: <br>
-
-	docker-compose up -d
-
-After the container is up and running, the script can be run manually by triggering an `FastAPI` endpoint. <br>
+After the container is up and running, the script can be run manually by
+triggering a `FastAPI` endpoint:
 
  * By using the GUI at:<br>
 ```http://localhost:8000/docs```
 and triggering `/trigger/all`.
-
  * Calling the endpoint from terminal: <br>
 ```$ curl -X 'POST' 'http://localhost:8000/trigger/all'``` <br>
 
-As it checks and updates managers you will get a lot of output in `docker logs`, especially if you have opted for `debug`information from logs.
+As it checks and updates managers you will get a lot of output in `docker logs`,
+especially if you have opted for `debug` information from logs.
 
 Once the script has finished the last lines will look like this:
 
@@ -95,9 +92,6 @@ sd_managerscript_1  | 2022-12-09 10:38.30 [info     ] Updating Managers
 sd_managerscript_1  | 2022-12-09 10:38.30 [info     ] Updating managers complete!
 
 ```
-
-
-
 ***
 ## Development
 ***
@@ -139,14 +133,16 @@ and even use filtering with `-k`
 You can use the flags `-vx` where `v` prints the test & `x` makes the test stop if any tests fails (Verbose, X-fail)
 
 ### Injecting test data into OS2MO
-Test data have been prepared for local development. To use the test data nd inject it, it requires a running `OS2MO` instance locally, as well as the standard test data from Kolding, which is included in `OS2MO` repository.
+Test data have been prepared for local development. Using the test data requires
+a running OS2mo instance locally as well as the standard test data from Kolding,
+which is included in OS2mo repository.
 
-Before using this integration locally you need to clone and run the `OS2MO` container from [OS2MO repo](https://git.magenta.dk/rammearkitektur/os2mo):<br>
+Before using this integration locally you need to clone and run the `OS2MO` container from [OS2MO repo](https://git.magenta.dk/rammearkitektur/os2mo):
 Once cloned you can start main `OS2MO` container using:
 ```docker-compose up --build -d```
 
 You can now inject test data from this repository by changing folder to where this repository is located locally.
-Then run the folling command:
+Then run the following command:
 
 ```
 poetry run python tests/test_data/inject_test_data.py "603f1c82-d012-4d04-9382-dbe659c533fb"

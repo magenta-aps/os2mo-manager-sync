@@ -61,6 +61,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
             name="Sønder Stenderup skole",
+            # TODO: this child count must be a bug...
             child_count=-2,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),

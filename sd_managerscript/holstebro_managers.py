@@ -188,7 +188,7 @@ async def check_manager_engagement(
 
 
 async def get_manager_org_units(
-    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID
+    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, recursive: bool = True
 ) -> list[OrgUnitManagers]:
     """
     Recursive function, traverse through all org_units and return '_leder' org-units
@@ -196,6 +196,8 @@ async def get_manager_org_units(
     Args:
         Graphql client
         org_unit_uuid: UUID
+        recursive: If true, all manager OUs will be fetched recursively. If false,
+          only the '_leder' OUs directly below the org_unit_uuid will be fetched.
     Returns:
         managers: list of '_leder' OrgUnitManagers
 
@@ -207,6 +209,8 @@ async def get_manager_org_units(
     child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
     # Selecting org_unit with names ending in "_leder" but NOT starting with "Ø_"
+    # TODO: we should probably check that there is only one '_leder' in each org unit
+    #   level in the OU-tree
     manager_list = list(
         filter(
             lambda ou: (jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder")
@@ -215,12 +219,13 @@ async def get_manager_org_units(
         )
     )
     logger.debug("Manager list up until now...", org_units=manager_list)
-    manager_list += [
-        await get_manager_org_units(  # type: ignore
-            gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
-        )
-        for org_unit in child_org_units
-    ]
+    if recursive:
+        manager_list += [
+            await get_manager_org_units(  # type: ignore
+                gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
+            )
+            for org_unit in child_org_units
+        ]
     managers = list(collapse(manager_list, base_type=OrgUnitManagers))
     return managers
 

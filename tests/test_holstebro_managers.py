@@ -76,8 +76,6 @@ async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
     """Test the "get_manager_org_units" method returns correct '_leder' org-units."""
 
     sample_data, expected_managers = get_sample_data()
-    print("Sample data:")
-    print(sample_data)
     mock_query_org_unit.side_effect = sample_data
     uuid = UUID("23a2ace2-52ca-458d-bead-d1a42080579f")
     gql_client = AsyncMock()

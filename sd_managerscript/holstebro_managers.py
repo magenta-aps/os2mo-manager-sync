@@ -508,21 +508,21 @@ async def get_manager_level(
     """
 
     # Assign manager level based on "NYx" org_unit_level_uuid
-    managerlevel_dict = one(get_settings().manager_level_mapping)
-    org_unit_dict = jsonable_encoder(org_unit)
-    org_unit_level_uuid = org_unit_dict["parent"]["org_unit_level_uuid"]
+    # TODO: use Pydantic model instead of dict in the ENV
+    manager_level_dict = one(get_settings().manager_level_mapping)
+    org_unit_level_uuid = org_unit.parent.org_unit_level_uuid
 
     # If parent org-unit name is ending with "led-adm"
     # we fetch org_unit_level_uuid from org-unit two levels up
-    if org_unit_dict["parent"]["name"].strip()[-7:] == "led-adm":
-        variables = {"uuids": str(org_unit_dict["parent"]["uuid"])}
+    if org_unit.parent.name.strip()[-7:] == "led-adm":
+        variables = {"uuids": str(org_unit.parent.uuid)}
         data = await query_graphql(gql_client, QUERY_ORG_UNIT_LEVEL, variables)
 
         org_unit_level_uuid = one(one(data["org_units"])["objects"])[
             "org_unit_level_uuid"
         ]
 
-    return ManagerLevel(uuid=UUID(managerlevel_dict[org_unit_level_uuid]))
+    return ManagerLevel(uuid=UUID(manager_level_dict[str(org_unit_level_uuid)]))
 
 
 async def create_update_manager(

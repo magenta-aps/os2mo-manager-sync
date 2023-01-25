@@ -30,7 +30,6 @@ from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
 from .queries import QUERY_ORG_UNITS
 from .queries import QUERY_ROOT_MANAGER_ENGAGEMENTS
-from .queries import QUERY_ROOT_ORG_UNIT
 from .queries import UPDATE_MANAGER
 from .util import execute_mutator
 from .util import query_graphql
@@ -564,20 +563,15 @@ async def update_mo_managers(
 ) -> None:
     """Main function for selecting and updating managers"""
 
-    logger.msg("Getting root-org...")
-    variables = {"uuids": str(root_uuid)}
-    root_org_unit = await query_graphql(gql_client, QUERY_ROOT_ORG_UNIT, variables)
-    root_org_unit_uuid = UUID(one(root_org_unit["org_units"])["uuid"])
-
-    logger.msg("Check and terminate unengaged managers...")
+    logger.msg("Check for unengaged managers...")
     managers_to_terminate = await check_manager_engagement(
-        gql_client, root_org_unit_uuid, root_uuid
+        gql_client, root_uuid, root_uuid
     )
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
     for manager_uuid in managers_to_terminate:
         await terminate_manager(gql_client, manager_uuid)
     logger.msg("Getting org-units...")
-    manager_org_units = await get_manager_org_units(gql_client, root_org_unit_uuid)
+    manager_org_units = await get_manager_org_units(gql_client, root_uuid)
 
     logger.info("Filter Managers")
     org_units = [

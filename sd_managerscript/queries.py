@@ -6,10 +6,6 @@ ORG_UNITS = "org_units"
 
 QUERY_ORG = gql("query {org { uuid }}")
 
-QUERY_ROOT_ORG_UNIT = gql(
-    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {uuid}}"""
-)
-
 QUERY_ORG_UNIT_LEVEL = gql(
     """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {objects{org_unit_level_uuid}}}"""
 )

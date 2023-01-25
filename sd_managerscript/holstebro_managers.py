@@ -566,7 +566,7 @@ async def update_mo_managers(
     for manager_uuid in managers_to_terminate:
         await terminate_manager(gql_client, manager_uuid)
     logger.msg("Getting org-units...")
-    manager_org_units = await get_manager_org_units(gql_client, root_org_unit_uuid)
+    manager_org_units = await get_manager_org_units(gql_client, root_uuid)
 
     logger.info("Filter Managers")
     org_units = [

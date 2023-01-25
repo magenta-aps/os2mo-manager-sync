@@ -115,7 +115,10 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
 
 
 async def check_manager_engagement(
-    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, root_uuid: UUID
+    gql_client: PersistentGraphQLClient,
+    org_unit_uuid: UUID,
+    root_uuid: UUID,
+    recursive: bool = True,
 ) -> list[UUID]:
     """
     Recursive function, traverse through all org_units and checks if manager has engagement
@@ -127,6 +130,7 @@ async def check_manager_engagement(
         org_unit_uuid: UUID of the parent org-unit we want to get child org-units from
         root_uuid: root_uuid of the Organisation tree.
                    (root_uuid is fetched from enviromental variable)
+        recursive: If true, check manager engagement recursively
     Returns:
         list of manager UUID's
 
@@ -146,10 +150,16 @@ async def check_manager_engagement(
         https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177689
     """
 
+    # TODO: add unit test for recursive=False
+
     variables = {"uuid": str(org_unit_uuid)}
     managers_to_terminate = []
 
-    # If this is root org-unit we have to query it seperately
+    # If this is root org-unit we have to query it separately
+    # For info: the difference between QUERY_ROOT_MANAGER_ENGAGEMENTS and
+    # QUERY_MANAGER_ENGAGEMENTS is that the latter uses org_units(parents: ...) where
+    # the former uses org_units(uuids: ...)
+    # TODO: investigate if this can be refactored
     if org_unit_uuid == root_uuid:
         data = await query_graphql(
             gql_client, QUERY_ROOT_MANAGER_ENGAGEMENTS, variables
@@ -173,15 +183,18 @@ async def check_manager_engagement(
         if (out := await get_unengaged_managers(org_unit))
     ]
 
-    # Fetch org-units with children
-    child_org_units = filter(
-        lambda org_unit: one(org_unit["objects"])["child_count"] > 0, data["org_units"]
-    )
-    # Pass org_units with children (uuid)to this function recusively
-    managers_to_terminate += [
-        await check_manager_engagement(gql_client, org_unit["uuid"], root_uuid)  # type: ignore
-        for org_unit in child_org_units
-    ]
+    if recursive:
+        # Fetch org-units with children
+        child_org_units = filter(
+            lambda org_unit: one(org_unit["objects"])["child_count"] > 0,
+            data["org_units"],
+        )
+        # Pass org_units with children (uuid)to this function recusively
+        managers_to_terminate += [
+            await check_manager_engagement(gql_client, org_unit["uuid"], root_uuid)  # type: ignore
+            for org_unit in child_org_units
+        ]
+
     managers = list(collapse(managers_to_terminate, base_type=UUID))
     return managers
 

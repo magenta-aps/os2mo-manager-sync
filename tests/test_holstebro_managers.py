@@ -9,10 +9,12 @@ from unittest.mock import call
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
+from ramodels.mo import Validity  # type: ignore
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.holstebro_managers import check_manager_engagement
@@ -27,10 +29,12 @@ from sd_managerscript.holstebro_managers import get_unengaged_managers
 from sd_managerscript.holstebro_managers import terminate_association
 from sd_managerscript.holstebro_managers import terminate_manager
 from sd_managerscript.holstebro_managers import update_manager
+from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
+from sd_managerscript.models import Parent
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_create_update_manager_data
@@ -79,6 +83,96 @@ async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
     returned_managers = await get_manager_org_units(gql_client, org_unit_uuid=uuid)
 
     assert returned_managers == expected_managers
+
+
+async def test_get_manager_org_units_recursion_disabled() -> None:
+    # Arrange
+    _leder_org_unit_uuid = uuid4()
+    association_uuid = uuid4()
+    employee_uuid = uuid4()
+    association_type_uuid = uuid4()
+    parent_uuid = uuid4()
+    org_uuid = uuid4()
+    org_unit_level_uuid = uuid4()
+
+    mock_execute = AsyncMock(
+        return_value={
+            "org_units": [
+                {
+                    "objects": [
+                        {
+                            "uuid": str(uuid4()),
+                            "name": "some sub unit with children",
+                            "child_count": 5,
+                            "associations": [],
+                            "parent": {
+                                "uuid": parent_uuid,
+                                "name": "some unit",
+                                "parent_uuid": org_uuid,
+                                "org_unit_level_uuid": str(uuid4()),
+                            },
+                        }
+                    ]
+                },
+                {
+                    "objects": [
+                        {
+                            "uuid": str(_leder_org_unit_uuid),
+                            "name": "the _leder sub unit_leder",
+                            "child_count": 0,
+                            "associations": [
+                                {
+                                    "uuid": str(association_uuid),
+                                    "org_unit_uuid": str(_leder_org_unit_uuid),
+                                    "employee_uuid": str(employee_uuid),
+                                    "association_type_uuid": str(association_type_uuid),
+                                    "validity": {
+                                        "from": "2006-01-17T00:00:00",
+                                        "to": None,
+                                    },
+                                }
+                            ],
+                            "parent": {
+                                "uuid": str(parent_uuid),
+                                "name": "some unit",
+                                "parent_uuid": str(org_uuid),
+                                "org_unit_level_uuid": str(org_unit_level_uuid),
+                            },
+                        }
+                    ]
+                },
+            ]
+        }
+    )
+    mock_gql_client = AsyncMock()
+    mock_gql_client.execute = mock_execute
+
+    # Act
+    manager_org_units = await get_manager_org_units(mock_gql_client, parent_uuid, False)
+
+    # Assert
+    assert manager_org_units == [
+        OrgUnitManagers(
+            uuid=_leder_org_unit_uuid,
+            name="the _leder sub unit_leder",
+            child_count=0,
+            associations=[
+                Association(
+                    uuid=association_uuid,
+                    org_unit_uuid=_leder_org_unit_uuid,
+                    employee_uuid=employee_uuid,
+                    association_type_uuid=association_type_uuid,
+                    validity=Validity(from_date=datetime(2006, 1, 17, 0, 0, 0)),
+                )
+            ],
+            parent=Parent(
+                uuid=parent_uuid,
+                name="some unit",
+                parent_uuid=org_uuid,
+                org_unit_level_uuid=org_unit_level_uuid,
+            ),
+        )
+    ]
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from contextlib import AsyncExitStack
 from typing import Any
+from uuid import UUID
 
 import structlog
 from fastapi import FastAPI
@@ -74,11 +75,24 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     async def index() -> dict[str, str]:
         return {"Integration": "SD Managersync"}
 
+    @app.post("/trigger/{ou_uuid}")
+    async def update_single_org_unit(ou_uuid: UUID) -> None:
+        gql_client = context["gql_client"]
+        root_uuid = context["root_uuid"]
+        await update_mo_managers(
+            gql_client=gql_client,
+            org_unit_uuid=ou_uuid,
+            root_uuid=root_uuid,
+            recursive=False,
+        )
+
     @app.post("/trigger/all", status_code=202)
     async def run_update() -> None:
         """Starts update process of managers"""
         gql_client = context["gql_client"]
         root_uuid = context["root_uuid"]
-        await update_mo_managers(gql_client=gql_client, root_uuid=root_uuid)
+        await update_mo_managers(
+            gql_client=gql_client, org_unit_uuid=root_uuid, root_uuid=root_uuid
+        )
 
     return app

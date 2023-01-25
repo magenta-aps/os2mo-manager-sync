@@ -572,19 +572,24 @@ async def create_update_manager(
 
 
 async def update_mo_managers(
-    gql_client: PersistentGraphQLClient, root_uuid: UUID
+    gql_client: PersistentGraphQLClient,
+    org_unit_uuid: UUID,
+    root_uuid: UUID,
+    recursive: bool = True,
 ) -> None:
     """Main function for selecting and updating managers"""
 
     logger.msg("Check for unengaged managers...")
     managers_to_terminate = await check_manager_engagement(
-        gql_client, root_uuid, root_uuid
+        gql_client, org_unit_uuid, root_uuid, recursive=recursive
     )
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
     for manager_uuid in managers_to_terminate:
         await terminate_manager(gql_client, manager_uuid)
     logger.msg("Getting org-units...")
-    manager_org_units = await get_manager_org_units(gql_client, root_uuid)
+    manager_org_units = await get_manager_org_units(
+        gql_client, org_unit_uuid, recursive=recursive
+    )
 
     logger.info("Filter Managers")
     org_units = [

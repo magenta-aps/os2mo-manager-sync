@@ -76,7 +76,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
         return {"Integration": "SD Managersync"}
 
     @app.post("/trigger/{ou_uuid}")
-    async def update_single_org_unit(ou_uuid: UUID) -> None:
+    async def update_single_org_unit(ou_uuid: UUID, dry_run: bool = False) -> None:
         gql_client = context["gql_client"]
         root_uuid = context["root_uuid"]
         await update_mo_managers(

@@ -14,6 +14,7 @@ from .config import get_settings
 from .config import Settings
 from .holstebro_managers import update_mo_managers  # type: ignore
 from .init import create_missing_manager_levels
+from .log import setup_logging
 
 logger = structlog.get_logger()
 
@@ -53,7 +54,11 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     settings = get_settings(*args, **kwargs)
     app = FastAPI()
 
+    setup_logging(settings.log_level)
     context = construct_context()
+
+    logger.info("This is info")
+    logger.debug("This is debug")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator:

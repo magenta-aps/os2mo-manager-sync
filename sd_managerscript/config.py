@@ -4,7 +4,6 @@ from functools import cache
 from typing import Any
 from uuid import UUID
 
-import structlog
 from pydantic import AnyHttpUrl
 from pydantic import BaseSettings
 from pydantic import Field
@@ -12,8 +11,6 @@ from pydantic import parse_obj_as
 from pydantic import SecretStr
 
 from .init import ManagerLevel
-
-logger = structlog.get_logger()
 
 
 class Settings(BaseSettings):
@@ -43,6 +40,8 @@ class Settings(BaseSettings):
     )
     manager_level_create: list[ManagerLevel]
 
+    log_level: str = "INFO"
+
 
 @cache
 def get_settings(*args: Any, **kwargs: Any) -> Settings:
@@ -55,6 +54,4 @@ def get_settings(*args: Any, **kwargs: Any) -> Settings:
     Return:
         Cached settings object.
     """
-    settings = Settings(*args, **kwargs)
-    logger.debug("Settings fetched", settings=settings, args=args, kwargs=kwargs)
-    return settings
+    return Settings(*args, **kwargs)

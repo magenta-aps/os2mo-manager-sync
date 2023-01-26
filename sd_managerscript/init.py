@@ -155,7 +155,7 @@ async def create_missing_manager_levels(
             lambda ml: ml.name not in existing_manager_levels, mandatory_manager_levels
         )
     )
-    print(missing_manager_levels)
+
     for manager_level in missing_manager_levels:
         await create_manager_level(
             gql_client,

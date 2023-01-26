@@ -280,6 +280,8 @@ async def terminate_manager(
         Nothing
     """
 
+    # TODO: unit test for dry run
+
     input = {
         "input": {
             "uuid": str(manager_uuid),
@@ -547,7 +549,7 @@ async def get_manager_level(
 async def create_update_manager(
     gql_client: PersistentGraphQLClient,
     org_unit: OrgUnitManagers,
-    dry_run: bool = False
+    dry_run: bool = False,
 ) -> None:
     """
     Create manager payload and send request to update manager in relevant org-units
@@ -559,6 +561,9 @@ async def create_update_manager(
     Returns:
         Nothing
     """
+
+    # TODO: unit test for dry run
+
     logger.debug("Creating manager object.", org_unit=org_unit)
     manager_level = await get_manager_level(gql_client, org_unit)
 
@@ -578,9 +583,7 @@ async def create_update_manager(
                 "Parent unit is 'led-adm' - manager will also be assigned here"
             )
             if not dry_run:
-                await update_manager(
-                    gql_client, org_unit.parent.parent_uuid, manager
-                )
+                await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
 async def update_mo_managers(

@@ -54,6 +54,7 @@ services:
                 "user_key": "manager_1040"
             }
         ]'
+      LOG_LEVEL: DEBUG
     networks:
       - os2mo_default
     ports:

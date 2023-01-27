@@ -599,6 +599,8 @@ async def update_mo_managers(
     managers_to_terminate = await check_manager_engagement(
         gql_client, org_unit_uuid, root_uuid, recursive=recursive
     )
+    logger.debug("Managers to terminate", managers_to_terminate=managers_to_terminate)
+
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
     for manager_uuid in managers_to_terminate:
         await terminate_manager(gql_client, manager_uuid, dry_run=dry_run)
@@ -607,6 +609,7 @@ async def update_mo_managers(
     manager_org_units = await get_manager_org_units(
         gql_client, org_unit_uuid, recursive=recursive
     )
+    logger.debug("Manager org units", manager_org_units=manager_org_units)
 
     logger.info("Filter Managers")
     org_units = [

@@ -267,7 +267,7 @@ async def terminate_association(
 
 
 async def terminate_manager(
-    gql_client: PersistentGraphQLClient, manager_uuid: UUID
+    gql_client: PersistentGraphQLClient, manager_uuid: UUID, dry_run: bool = False
 ) -> None:
     """
     Terminates manager role in parent org-unit (updates end date).
@@ -275,9 +275,12 @@ async def terminate_manager(
     Args:
         gql_client: GraphQL client
         manager_uuid: UUID of the association to terminate
+        dry_run: If true, do not actually perform write operations to MO
     Returns:
         Nothing
     """
+
+    # TODO: unit test for dry run
 
     input = {
         "input": {
@@ -286,7 +289,8 @@ async def terminate_manager(
         }
     }
 
-    await execute_mutator(gql_client, MANAGER_TERMINATE, input)
+    if not dry_run:
+        await execute_mutator(gql_client, MANAGER_TERMINATE, input)
     logger.info("Manager terminated!", input=input)
 
 
@@ -543,7 +547,9 @@ async def get_manager_level(
 
 
 async def create_update_manager(
-    gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
+    gql_client: PersistentGraphQLClient,
+    org_unit: OrgUnitManagers,
+    dry_run: bool = False,
 ) -> None:
     """
     Create manager payload and send request to update manager in relevant org-units
@@ -551,9 +557,13 @@ async def create_update_manager(
     Args:
         gql_client: GraphQL client
         org_unit: OrgUnitManagers object
+        dry_run: If true, do not actually perform write operations to MO
     Returns:
         Nothing
     """
+
+    # TODO: unit test for dry run
+
     logger.debug("Creating manager object.", org_unit=org_unit)
     manager_level = await get_manager_level(gql_client, org_unit)
 
@@ -563,28 +573,43 @@ async def create_update_manager(
             manager_level,
         )
         logger.debug("Update manager role.", manager=manager)
-        await update_manager(gql_client, org_unit.parent.uuid, manager)
+        if not dry_run:
+            await update_manager(gql_client, org_unit.parent.uuid, manager)
 
         # If parent org-unit has "led-adm" in name,
         # it's parent org-unit will also have the manager assigned
         if org_unit.parent.name.strip()[-7:] == "led-adm":
-            await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
+            logger.debug(
+                "Parent unit is 'led-adm' - manager will also be assigned here"
+            )
+            if not dry_run:
+                await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
 async def update_mo_managers(
-    gql_client: PersistentGraphQLClient, root_uuid: UUID
+    gql_client: PersistentGraphQLClient,
+    org_unit_uuid: UUID,
+    root_uuid: UUID,
+    recursive: bool = True,
+    dry_run: bool = False,
 ) -> None:
     """Main function for selecting and updating managers"""
 
-    logger.msg("Check for unengaged managers...")
+    logger.info("Check for unengaged managers...")
     managers_to_terminate = await check_manager_engagement(
-        gql_client, root_uuid, root_uuid
+        gql_client, org_unit_uuid, root_uuid, recursive=recursive
     )
+    logger.debug("Managers to terminate", managers_to_terminate=managers_to_terminate)
+
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
     for manager_uuid in managers_to_terminate:
-        await terminate_manager(gql_client, manager_uuid)
-    logger.msg("Getting org-units...")
-    manager_org_units = await get_manager_org_units(gql_client, root_uuid)
+        await terminate_manager(gql_client, manager_uuid, dry_run=dry_run)
+
+    logger.info("Getting org-units...")
+    manager_org_units = await get_manager_org_units(
+        gql_client, org_unit_uuid, recursive=recursive
+    )
+    logger.debug("Manager org units", manager_org_units=manager_org_units)
 
     logger.info("Filter Managers")
     org_units = [
@@ -592,6 +617,6 @@ async def update_mo_managers(
     ]
     logger.info("Updating Managers")
     for org_unit in org_units:
-        await create_update_manager(gql_client, org_unit)
+        await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
     logger.info("Updating managers complete!")

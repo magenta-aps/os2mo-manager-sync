@@ -26,7 +26,7 @@ services:
       MANAGER_TYPE_UUID: "75fee2b6-f405-4c77-b62e-32421c2e43d5"
       RESPONSIBILITY_UUID: "d82039a5-f2d5-48e4-8eab-8c9f7694e16f"
       MANAGER_LEVEL_MAPPING: '[{
-        "1ec3d3ae-8ad6-f689-57a9-7441f6ffca05": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
+        "1ec3d3ae-8ad6-f689-57a9-7441f6ffca05": "b352fff5-c6ef-4efa-b9fc-7e738bee6b9f",
         "891603db-cc28-6ed2-6d48-25e14d3f142f": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0",
         "0263522a-2c1e-9c80-1880-92c1b97cfead": "a8754726-a4b9-1715-6b41-769c6fe703c5",
         "fc968d00-41f2-3efb-401a-30a3cf854227": "9ffaff0f-8b6e-6e99-a517-f841a04c61c2",

@@ -155,6 +155,9 @@ Sending and fetching data to/from `OS2MO` is done using a `GraphQL` client impor
 
 ***
 
+## TODO
+* Leder units have to be NY-levels - currently failing for Afdelings-niveauer
+
 ## Authors
 
 Magenta ApS <https://magenta.dk>

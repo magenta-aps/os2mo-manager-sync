@@ -87,6 +87,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
             org_unit_uuid=ou_uuid,
             root_uuid=root_uuid,
             recursive=False,
+            dry_run=dry_run
         )
 
     @app.post("/trigger/all", status_code=202)

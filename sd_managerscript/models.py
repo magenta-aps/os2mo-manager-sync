@@ -30,12 +30,6 @@ class Association(BaseModel):
     validity: Validity = Field(description="Validity range for the org-unit.")
 
 
-class ManagerLevel(BaseModel):
-    """Managerlevel"""
-
-    uuid: UUID = Field(description="UUID of the managerlevel.")
-
-
 class ManagerType(BaseModel):
     """Managertype"""
 
@@ -46,7 +40,7 @@ class Manager(BaseModel):
     """Manager model"""
 
     employee: UUID = Field(description="UUID of the related employee.")
-    manager_level: ManagerLevel = Field(description="Manager level object.")
+    manager_level: UUID
     manager_type: ManagerType = Field(
         description="Manager type object. Same for all managers"
     )
@@ -70,7 +64,7 @@ class Parent(BaseModel):
 
 class OrgUnitManagers(BaseModel):
     """
-    Organisation unit with managers
+    Organisation unit with managers, i.e. the units ending with "_leder"
 
     We made our own Pydantic model as we combined the org-unit model
     with Association model and also omitted some fields not neccessary for

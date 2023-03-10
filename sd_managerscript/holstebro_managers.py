@@ -18,7 +18,6 @@ from .config import get_settings
 from .exceptions import ConflictingManagers
 from .models import EngagementFrom
 from .models import Manager
-from .models import ManagerLevel
 from .models import ManagerType
 from .models import OrgUnitManagers
 from .queries import ASSOCIATION_TERMINATE
@@ -123,7 +122,6 @@ async def check_manager_engagement(
     """
     Recursive function, traverse through all org_units and checks if manager has engagement
     If not: Managers uuid is added to managers_to_terminate for later termination
-
 
     Args:
         Graphql client
@@ -446,7 +444,7 @@ async def get_current_manager(
 
 
 async def create_manager_object(
-    org_unit: OrgUnitManagers, manager_level: ManagerLevel
+    org_unit: OrgUnitManagers, manager_level_uuid: UUID
 ) -> Manager:
     """
     Create Manager object for updating and creating managers
@@ -467,7 +465,7 @@ async def create_manager_object(
     manager = Manager(
         employee=org_unit.associations[0].employee_uuid,
         org_unit=org_unit.uuid,
-        manager_level=manager_level,
+        manager_level=manager_level_uuid,
         manager_type=ManagerType(uuid=manager_type_uuid),
         validity=Validity(
             from_date=datetime.today().date().isoformat(),
@@ -497,7 +495,6 @@ async def update_manager(
     """
     manager_dict = jsonable_encoder(manager_obj)
     manager_dict["manager_type"] = manager_dict["manager_type"]["uuid"]
-    manager_dict["manager_level"] = manager_dict["manager_level"]["uuid"]
     manager_dict["person"] = manager_dict.pop("employee")
     manager_dict["org_unit"] = str(org_unit_uuid)
 
@@ -516,17 +513,23 @@ async def update_manager(
 
 async def get_manager_level(
     gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
-) -> ManagerLevel:
+) -> UUID:
     """
     Checks if parent org-unit is "led-adm" org-unit and returns
-    managerlevel based on org-unit level.
+    manager level based on org-unit level.
 
     Args:
         gql_client: GraphQL client
         org_unit: OrgUnitManagers object
     Returns
-        manager_level_uuid: UUID of managerlevel
+        UUID of manager level
     """
+
+    logger.debug(
+        "Get manager level for org unit (parent to the _leder unit)",
+        org_unit_uuid=org_unit.parent.uuid,
+        name=org_unit.parent.name,
+    )
 
     # Assign manager level based on "NYx" org_unit_level_uuid
     # TODO: use Pydantic model instead of dict in the ENV
@@ -543,7 +546,15 @@ async def get_manager_level(
             "org_unit_level_uuid"
         ]
 
-    return ManagerLevel(uuid=UUID(manager_level_dict[str(org_unit_level_uuid)]))
+    manager_level_uuid = UUID(manager_level_dict[str(org_unit_level_uuid)])
+
+    logger.debug(
+        "OU and manager levels",
+        org_unit_level_uuid=org_unit_level_uuid,
+        manager_level_uuid=manager_level_uuid,
+    )
+
+    return manager_level_uuid
 
 
 async def create_update_manager(
@@ -565,12 +576,16 @@ async def create_update_manager(
     # TODO: unit test for dry run
 
     logger.debug("Creating manager object.", org_unit=org_unit)
-    manager_level = await get_manager_level(gql_client, org_unit)
+    manager_level_uuid = await get_manager_level(gql_client, org_unit)
 
     if any(org_unit.associations):
+
+
+
+
         manager: Manager = await create_manager_object(
             org_unit,
-            manager_level,
+            manager_level_uuid,
         )
         logger.debug("Update manager role.", manager=manager)
         if not dry_run:

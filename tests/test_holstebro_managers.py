@@ -32,7 +32,6 @@ from sd_managerscript.holstebro_managers import update_manager
 from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
-from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
@@ -447,7 +446,7 @@ async def test_update_manager_object(
 @freeze_time("2019-01-14", tz_offset=1)
 async def test_create_manager_object(
     org_unit: OrgUnitManagers,
-    manager_level: ManagerLevel,
+    manager_level: UUID,
     expected_manager: Manager,
 ) -> None:
     """Test creation of Manager object based on OrgUnitManagers object"""
@@ -466,7 +465,7 @@ async def test_get_manager_level(
     gql_client: MagicMock,
     org_unit: OrgUnitManagers,
     parent_org_unit: dict,
-    expected_manager_lvl: ManagerLevel,
+    expected_manager_lvl: UUID,
 ) -> None:
     """Test getting correct org-unit level uuid"""
 

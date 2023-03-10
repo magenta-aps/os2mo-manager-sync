@@ -13,7 +13,6 @@ from ramodels.mo._shared import Validity  # type: ignore
 
 from sd_managerscript.models import Association
 from sd_managerscript.models import Manager
-from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import ManagerType
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
@@ -1095,9 +1094,7 @@ updata_manager_data = [
     (  # Test update manager
         Manager(
             uuid=None,
-            manager_level=ManagerLevel(
-                uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38")
-            ),
+            manager_level=UUID("d09ba017-f838-4742-b57e-44c2f5437e38"),
             manager_type=ManagerType(uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8")),
             employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
@@ -1134,9 +1131,7 @@ updata_manager_data = [
         Manager(
             uuid=None,
             org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-            manager_level=ManagerLevel(
-                uuid=UUID("d09ba017-f838-4742-b57e-44c2f5437e38")
-            ),
+            manager_level=UUID("d09ba017-f838-4742-b57e-44c2f5437e38"),
             manager_type=ManagerType(uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8")),
             employee=UUID("0790ca9c-f3ae-4e4b-b936-03b8aedf5314"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
@@ -1197,17 +1192,13 @@ create_manager_sample = [
                 )
             ],
         ),
-        ManagerLevel(
-            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-        ),
+        UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
         Manager(
             uuid=None,
             employee=UUID("8315443f-a918-4eea-9605-150472418101"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
             org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-            manager_level=ManagerLevel(
-                uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-            ),
+            manager_level=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
             manager_type=ManagerType(
                 uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
             ),
@@ -1243,17 +1234,13 @@ create_manager_sample = [
                 )
             ],
         ),
-        ManagerLevel(
-            uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
-        ),
+        UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
         Manager(
             uuid=None,
             employee=UUID("8315443f-a918-4eea-9605-150472418101"),
             responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
             org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-            manager_level=ManagerLevel(
-                uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
-            ),
+            manager_level=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
             manager_type=ManagerType(
                 uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
             ),
@@ -1265,6 +1252,7 @@ create_manager_sample = [
     ),
 ]
 
+# Tuples of (org unit, parent org unit, expected manager level)
 get_manager_lvl_sample = [
     (
         OrgUnitManagers(
@@ -1293,9 +1281,7 @@ get_manager_lvl_sample = [
             ],
         ),
         None,
-        ManagerLevel(
-            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-        ),
+        UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
     ),
     (
         OrgUnitManagers(
@@ -1332,9 +1318,7 @@ get_manager_lvl_sample = [
                 }
             ]
         },
-        ManagerLevel(
-            uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
-        ),
+        UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
     ),
 ]
 
@@ -1362,17 +1346,13 @@ get_create_update_manager_sample = (
             )
         ],
     ),
-    ManagerLevel(
-        uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-    ),
+    UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
     Manager(
         uuid=None,
         employee=UUID("8315443f-a918-4eea-9605-150472418101"),
         responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
         org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-        manager_level=ManagerLevel(
-            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-        ),
+        manager_level=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
         manager_type=ManagerType(
             uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
         ),
@@ -1407,17 +1387,13 @@ get_create_update_manager_led_adm_sample = (
             )
         ],
     ),
-    ManagerLevel(
-        uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-    ),
+    UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
     Manager(
         uuid=None,
         employee=UUID("8315443f-a918-4eea-9605-150472418101"),
         responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
         org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
-        manager_level=ManagerLevel(
-            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-        ),
+        manager_level=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
         manager_type=ManagerType(
             uuid=UUID("75fee2b6-f405-4c77-b62e-32421c2e43d5"),
         ),
@@ -1461,7 +1437,7 @@ def get_update_managers_data() -> list[tuple[Manager, str, Any, str | None, obje
     return updata_manager_data
 
 
-def get_create_manager_data() -> list[tuple[OrgUnitManagers, ManagerLevel, Manager]]:
+def get_create_manager_data() -> list[tuple[OrgUnitManagers, UUID, Manager]]:
     return create_manager_sample
 
 
@@ -1469,18 +1445,18 @@ def get_manager_level_data() -> list[
     tuple[
         OrgUnitManagers,
         dict[str, list[dict[str, list[dict[str, str]]]]] | None,
-        ManagerLevel,
+        UUID,
     ]
 ]:
     return get_manager_lvl_sample
 
 
-def get_create_update_manager_data() -> tuple[OrgUnitManagers, ManagerLevel, Manager]:
+def get_create_update_manager_data() -> tuple[OrgUnitManagers, UUID, Manager]:
     return get_create_update_manager_sample
 
 
 def get_create_update_manager_led_adm_data() -> tuple[
-    OrgUnitManagers, ManagerLevel, Manager
+    OrgUnitManagers, UUID, Manager
 ]:
     return get_create_update_manager_led_adm_sample
 

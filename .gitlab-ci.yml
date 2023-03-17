@@ -21,6 +21,9 @@ variables:
 
   PRECOMMIT_USE_POETRY: "true"
 
+  PRODUCT: os2mo
+  COMPONENT: manager-sync
+
 
 # Conditions
 #############
@@ -44,29 +47,11 @@ workflow:
 
 include:
   - project: labs/salt-automation
-    ref: master
-    file: /gitlab-ci-templates/common/autopub.v1.yml
-  - project: labs/salt-automation
-    ref: master
-    file: gitlab-ci-templates/python/pytest.v1.yml
-  - project: labs/salt-automation
-    ref: master
-    file: /gitlab-ci-templates/common/docker-release.v1.yml
-  - project: labs/salt-automation
-    ref: master
-    file: /gitlab-ci-templates/common/docker-build-meta.v2.yml
-  - project: labs/salt-automation
-    ref: master
-    file: /gitlab-ci-templates/common/pre-commit.v1.yml
-  - project: 'labs/salt-automation'
-    ref: 'master'
-    file: '/gitlab-ci-templates/common/config-updater-meta.v1.yml'
-
-
-
-# Build
-########
-Build:
-  extends: .build-docker
-  variables:
-    BUILD_DOCKER_EXTRA_FLAGS: "--build-arg=COMMIT_SHA=${CI_COMMIT_SHA} --build-arg=COMMIT_TAG=${CI_COMMIT_TAG}"
+    file:
+    - gitlab-ci-templates/common/conventional-commits.v1.yml
+    - gitlab-ci-templates/python/pytest.v1.yml
+    - gitlab-ci-templates/common/docker-release.v1.yml
+    - gitlab-ci-templates/common/docker-build.v1.yml
+    - gitlab-ci-templates/common/pre-commit.v1.yml
+    - gitlab-ci-templates/common/config-updater-flux.v1.yml
+    - gitlab-ci-templates/common/config-updater-salt.v1.yml

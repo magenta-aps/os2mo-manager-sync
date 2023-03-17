@@ -36,7 +36,7 @@ def construct_client(
         PersistentGraphQLClient.
     """
     gql_client = PersistentGraphQLClient(
-        url=settings.mo_url + "/graphql/v2",
+        url=settings.mo_url + "/graphql/v2",  # type: ignore
         client_id=settings.client_id,
         client_secret=settings.client_secret.get_secret_value(),
         auth_server=settings.auth_server,
@@ -50,7 +50,6 @@ def construct_client(
 
 
 def create_app(*args: Any, **kwargs: Any) -> FastAPI:
-
     settings = get_settings(*args, **kwargs)
     app = FastAPI()
 
@@ -60,7 +59,6 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator:
         async with AsyncExitStack() as stack:
-
             gql_client = construct_client(settings)
             context["gql_client"] = await stack.enter_async_context(gql_client)
             context["root_uuid"] = settings.root_uuid

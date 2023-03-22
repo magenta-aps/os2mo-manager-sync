@@ -160,7 +160,7 @@ async def check_manager_engagement(
     # QUERY_MANAGER_ENGAGEMENTS is that the latter uses org_units(parents: ...) where
     # the former uses org_units(uuids: ...)
     # TODO: investigate if this can be refactored
-    if org_unit_uuid == root_uuid:
+    if org_unit_uuid == root_uuid or not recursive:
         data = await query_graphql(
             gql_client, QUERY_ROOT_MANAGER_ENGAGEMENTS, variables
         )
@@ -170,6 +170,8 @@ async def check_manager_engagement(
             for org_unit in data["org_units"]
             if (out := await get_unengaged_managers(org_unit))
         ]
+        if not recursive:
+            return managers_to_terminate
 
     # Query for child org-units of org_unit_uuid
     data = await query_graphql(gql_client, QUERY_MANAGER_ENGAGEMENTS, variables)
@@ -183,17 +185,16 @@ async def check_manager_engagement(
         if (out := await get_unengaged_managers(org_unit))
     ]
 
-    if recursive:
-        # Fetch org-units with children
-        child_org_units = filter(
-            lambda org_unit: one(org_unit["objects"])["child_count"] > 0,
-            data["org_units"],
-        )
-        # Pass org_units with children (uuid)to this function recusively
-        managers_to_terminate += [
-            await check_manager_engagement(gql_client, org_unit["uuid"], root_uuid)  # type: ignore
-            for org_unit in child_org_units
-        ]
+    # Fetch org-units with children
+    child_org_units = filter(
+        lambda org_unit: one(org_unit["objects"])["child_count"] > 0,
+        data["org_units"],
+    )
+    # Pass org_units with children (uuid)to this function recusively
+    managers_to_terminate += [
+        await check_manager_engagement(gql_client, org_unit["uuid"], root_uuid)  # type: ignore
+        for org_unit in child_org_units
+    ]
 
     managers = list(collapse(managers_to_terminate, base_type=UUID))
     return managers
@@ -220,9 +221,10 @@ async def get_manager_org_units(
     logger.debug("Org-units returned from query", response=data)
     child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
-    # Selecting org_unit with names ending in "_leder" but NOT starting with "Ø_"
-    # TODO: we should probably check that there is only one '_leder' in each org unit
-    #   level in the OU-tree
+    # Selecting org_unit with names ending in "_leder" but NOT starting
+    # with "Ø_"
+    # TODO: we should probably check that there is only one '_leder' in each
+    #  org unit level in the OU-tree
     manager_list = list(
         filter(
             lambda ou: (jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder")
@@ -605,7 +607,7 @@ async def update_mo_managers(
     for manager_uuid in managers_to_terminate:
         await terminate_manager(gql_client, manager_uuid, dry_run=dry_run)
 
-    logger.info("Getting org-units...")
+    logger.info("Getting manager org units (units ending in _leder)...")
     manager_org_units = await get_manager_org_units(
         gql_client, org_unit_uuid, recursive=recursive
     )

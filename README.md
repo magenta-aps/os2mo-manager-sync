@@ -155,6 +155,11 @@ Sending and fetching data to/from `OS2MO` is done using a `GraphQL` client impor
 
 ***
 
+## TODO
+* Leder units have to be NY-levels - currently failing for Afdelings-niveauer
+* If there is no active engagement in OU and employee currently is manager
+  the manager will be terminated per todays date (and not when the engagement ended)
+
 ## Authors
 
 Magenta ApS <https://magenta.dk>

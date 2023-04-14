@@ -35,6 +35,7 @@ from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
+from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_create_update_manager_data
@@ -43,7 +44,6 @@ from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
 from tests.test_data.sample_test_data import get_manager_engagement_data
-from tests.test_data.sample_test_data import get_manager_level_data
 from tests.test_data.sample_test_data import get_sample_data
 from tests.test_data.sample_test_data import get_unengaged_managers_data
 from tests.test_data.sample_test_data import get_update_managers_data
@@ -456,25 +456,77 @@ async def test_create_manager_object(
 
     assert returned_manager == expected_manager
 
+async def test_get_manager_level(gql_client: MagicMock):
+    """
+    Test get_manager_level in the case where the OU is a "normal"
+    unit, i.e. a unit where the name is not suffixed with _led-adm
+    """
 
-@pytest.mark.parametrize(
-    "org_unit, parent_org_unit, expected_manager_lvl", get_manager_level_data()
-)
-@patch("sd_managerscript.holstebro_managers.query_graphql")
-async def test_get_manager_level(
-    mock_query_query_graphql: AsyncMock,
-    gql_client: MagicMock,
-    org_unit: OrgUnitManagers,
-    parent_org_unit: dict,
-    expected_manager_lvl: ManagerLevel,
-) -> None:
-    """Test getting correct org-unit level uuid"""
+    # Arrange
+    org_unit_manager = OrgUnitManagers(
+        uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+        name="SomeUnit_leder",
+        child_count=0,
+        parent=Parent(
+            uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+            name="SomeUnit",
+            parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+            org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
+        ),
+        associations=[],
+    )
 
-    mock_query_query_graphql.return_value = parent_org_unit
+    # Act
+    actual_manager_level = await get_manager_level(gql_client, org_unit_manager)
 
-    returned_manager_lvl = await get_manager_level(gql_client, org_unit)
+    # Assert
+    assert actual_manager_level == ManagerLevel(
+        uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5")
+    )
 
-    assert returned_manager_lvl == expected_manager_lvl
+async def test_get_manager_level_led_adm():
+    """
+    Test get_manager_level in the case where the OU is a "led-adm"
+    unit, i.e. a unit where the name is suffixed with _led-adm
+    """
+
+    # Arrange
+    org_unit_manager = OrgUnitManagers(
+        uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
+        name="SomeUnit_leder",
+        child_count=0,
+        parent=Parent(
+            uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+            name="SomeUnit_led-adm",
+            parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+            org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
+        ),
+        associations=[],
+    )
+    mock_gql_client = AsyncMock()
+    mock_execute = AsyncMock(return_value=
+        {
+            "org_units": [
+                {
+                    "objects": [
+                        {
+                            "org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
+                    ]
+                }
+            ]
+        }
+    )
+    mock_gql_client.execute = mock_execute
+
+    # Act
+    actual_manager_level = await get_manager_level(mock_gql_client, org_unit_manager)
+
+    # Assert
+    mock_execute.assert_awaited_once_with(
+        QUERY_ORG_UNIT_LEVEL, variable_values={"uuids": "2665d8e0-435b-5bb6-a550-f275692984ef"})
+    assert actual_manager_level == ManagerLevel(
+        uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0")
+    )
 
 
 @patch("sd_managerscript.holstebro_managers.update_manager")

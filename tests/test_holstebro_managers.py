@@ -456,7 +456,8 @@ async def test_create_manager_object(
 
     assert returned_manager == expected_manager
 
-async def test_get_manager_level(gql_client: MagicMock):
+
+async def test_get_manager_level(gql_client: MagicMock) -> None:
     """
     Test get_manager_level in the case where the OU is a "normal"
     unit, i.e. a unit where the name is not suffixed with _led-adm
@@ -484,7 +485,8 @@ async def test_get_manager_level(gql_client: MagicMock):
         uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5")
     )
 
-async def test_get_manager_level_led_adm():
+
+async def test_get_manager_level_led_adm() -> None:
     """
     Test get_manager_level in the case where the OU is a "led-adm"
     unit, i.e. a unit where the name is suffixed with _led-adm
@@ -504,13 +506,12 @@ async def test_get_manager_level_led_adm():
         associations=[],
     )
     mock_gql_client = AsyncMock()
-    mock_execute = AsyncMock(return_value=
-        {
+    mock_execute = AsyncMock(
+        return_value={
             "org_units": [
                 {
                     "objects": [
-                        {
-                            "org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
+                        {"org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
                     ]
                 }
             ]
@@ -523,7 +524,9 @@ async def test_get_manager_level_led_adm():
 
     # Assert
     mock_execute.assert_awaited_once_with(
-        QUERY_ORG_UNIT_LEVEL, variable_values={"uuids": "2665d8e0-435b-5bb6-a550-f275692984ef"})
+        QUERY_ORG_UNIT_LEVEL,
+        variable_values={"uuids": "2665d8e0-435b-5bb6-a550-f275692984ef"},
+    )
     assert actual_manager_level == ManagerLevel(
         uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0")
     )

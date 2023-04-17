@@ -539,9 +539,7 @@ async def get_manager_level(
     # we fetch org_unit_level_uuid from org-unit two levels up
     if org_unit.parent.name.strip()[-7:] == "led-adm":
         variables = {"uuids": str(org_unit.parent.parent_uuid)}
-        data = await gql_client.execute(
-            QUERY_ORG_UNIT_LEVEL, variable_values=variables
-        )
+        data = await gql_client.execute(QUERY_ORG_UNIT_LEVEL, variable_values=variables)
 
         org_unit_level_uuid = one(one(data["org_units"])["objects"])[
             "org_unit_level_uuid"

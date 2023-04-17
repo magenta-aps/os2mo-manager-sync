@@ -1265,78 +1265,6 @@ create_manager_sample = [
     ),
 ]
 
-get_manager_lvl_sample = [
-    (
-        OrgUnitManagers(
-            uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
-            name="Social og sundhed_leder",
-            child_count=0,
-            parent=Parent(
-                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-                name="Skoler",
-                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
-            ),
-            associations=[
-                Association(
-                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                    validity=Validity(
-                        from_date=datetime(
-                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
-                        ),
-                        to_date=None,
-                    ),
-                )
-            ],
-        ),
-        None,
-        ManagerLevel(
-            uuid=UUID("a8754726-a4b9-1715-6b41-769c6fe703c5"),
-        ),
-    ),
-    (
-        OrgUnitManagers(
-            uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
-            name="Hjemmeskolen",
-            child_count=0,
-            parent=Parent(
-                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-                name="Skoler_led-adm",
-                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
-            ),
-            associations=[
-                Association(
-                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
-                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-                    validity=Validity(
-                        from_date=datetime(
-                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
-                        ),
-                        to_date=None,
-                    ),
-                ),
-            ],
-        ),
-        {
-            "org_units": [
-                {
-                    "objects": [
-                        {"org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
-                    ]
-                }
-            ]
-        },
-        ManagerLevel(
-            uuid=UUID("e226821b-4af3-1e91-c53f-ea5c57c6d8d0"),
-        ),
-    ),
-]
 
 get_create_update_manager_sample = (
     OrgUnitManagers(
@@ -1463,16 +1391,6 @@ def get_update_managers_data() -> list[tuple[Manager, str, Any, str | None, obje
 
 def get_create_manager_data() -> list[tuple[OrgUnitManagers, ManagerLevel, Manager]]:
     return create_manager_sample
-
-
-def get_manager_level_data() -> list[
-    tuple[
-        OrgUnitManagers,
-        dict[str, list[dict[str, list[dict[str, str]]]]] | None,
-        ManagerLevel,
-    ]
-]:
-    return get_manager_lvl_sample
 
 
 def get_create_update_manager_data() -> tuple[OrgUnitManagers, ManagerLevel, Manager]:

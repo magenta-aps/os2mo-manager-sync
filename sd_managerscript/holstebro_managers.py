@@ -521,13 +521,13 @@ async def get_manager_level(
 ) -> ManagerLevel:
     """
     Checks if parent org-unit is "led-adm" org-unit and returns
-    managerlevel based on org-unit level.
+    manager level based on org-unit level.
 
     Args:
         gql_client: GraphQL client
         org_unit: OrgUnitManagers object
     Returns
-        manager_level_uuid: UUID of managerlevel
+        manager_level_uuid: UUID of manager level
     """
 
     # Assign manager level based on "NYx" org_unit_level_uuid
@@ -538,8 +538,8 @@ async def get_manager_level(
     # If parent org-unit name is ending with "led-adm"
     # we fetch org_unit_level_uuid from org-unit two levels up
     if org_unit.parent.name.strip()[-7:] == "led-adm":
-        variables = {"uuids": str(org_unit.parent.uuid)}
-        data = await query_graphql(gql_client, QUERY_ORG_UNIT_LEVEL, variables)
+        variables = {"uuids": str(org_unit.parent.parent_uuid)}
+        data = await gql_client.execute(QUERY_ORG_UNIT_LEVEL, variable_values=variables)
 
         org_unit_level_uuid = one(one(data["org_units"])["objects"])[
             "org_unit_level_uuid"

@@ -14,7 +14,6 @@ from .init import ManagerLevel
 
 
 class Settings(BaseSettings):
-
     graphql_timeout: int = 120
     client_id: str = Field("SD-Managerscript", description="Client ID for OIDC client.")
     client_secret: SecretStr = Field(..., description="Client Secret for OIDC client.")

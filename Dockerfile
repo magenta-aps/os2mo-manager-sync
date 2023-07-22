@@ -7,7 +7,7 @@ FROM python:3.11.2
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    POETRY_VERSION="1.2.0" \
+    POETRY_VERSION="1.5.1" \
     POETRY_HOME=/opt/poetry \
     VIRTUAL_ENV="/venv"
 ENV PATH="$VIRTUAL_ENV/bin:$POETRY_HOME/bin:$PATH"
@@ -26,9 +26,3 @@ WORKDIR /opt/app
 COPY sd_managerscript .
 WORKDIR /opt/
 CMD [ "uvicorn", "--factory", "app.main:create_app", "--host", "0.0.0.0" ]
-
-# # Add build version to the environment last to avoid build cache misses
-# ARG COMMIT_TAG
-# ARG COMMIT_SHA
-# ENV COMMIT_TAG=${COMMIT_TAG:-HEAD} \
-#     COMMIT_SHA=${COMMIT_SHA}

@@ -1371,9 +1371,9 @@ def get_active_engagements_data() -> Iterable[tuple[str, object, object]]:
     yield from data_get_active_engagements
 
 
-def get_filter_managers_data() -> Iterable[
-    tuple[OrgUnitManagers, list[dict[str, str]], OrgUnitManagers]
-]:
+def get_filter_managers_data() -> (
+    Iterable[tuple[OrgUnitManagers, list[dict[str, str]], OrgUnitManagers]]
+):
     yield from filter_managers_data
 
 
@@ -1397,19 +1397,21 @@ def get_create_update_manager_data() -> tuple[OrgUnitManagers, ManagerLevel, Man
     return get_create_update_manager_sample
 
 
-def get_create_update_manager_led_adm_data() -> tuple[
-    OrgUnitManagers, ManagerLevel, Manager
-]:
+def get_create_update_manager_led_adm_data() -> (
+    tuple[OrgUnitManagers, ManagerLevel, Manager]
+):
     return get_create_update_manager_led_adm_sample
 
 
-def get_manager_engagement_data() -> tuple[
-    list[dict[str, list[dict[str, Sequence[Collection[str]]]]]], list[UUID | None]
-]:
+def get_manager_engagement_data() -> (
+    tuple[
+        list[dict[str, list[dict[str, Sequence[Collection[str]]]]]], list[UUID | None]
+    ]
+):
     return engagement_samples, expected_managers_list
 
 
-def get_unengaged_managers_data() -> list[
-    tuple[dict[str, Sequence[Collection[str]]], UUID | None]
-]:
+def get_unengaged_managers_data() -> (
+    list[tuple[dict[str, Sequence[Collection[str]]], UUID | None]]
+):
     return unengaged_managers_sample

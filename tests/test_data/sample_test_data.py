@@ -362,6 +362,13 @@ unengaged_managers_sample = [
                                             },
                                         },
                                         {
+                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                                            "validity": {
+                                                "from": "2019-02-20T00:00:00+01:00",
+                                                "to": "2025-02-20T00:00:00+01:00",
+                                            },
+                                        },
+                                        {
                                             "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
                                             "validity": {
                                                 "from": "2022-11-20T00:00:00+01:00",

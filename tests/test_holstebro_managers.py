@@ -212,6 +212,7 @@ async def test_check_manager_engagement(
     assert managers_list == expected
 
 
+@freeze_time("2023-01-01")
 @pytest.mark.parametrize("query_dict, expected", get_unengaged_managers_data())
 async def test_get_unengaged_managers(
     query_dict: dict[str, str | dict[str, str]], expected: UUID | None

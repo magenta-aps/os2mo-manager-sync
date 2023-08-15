@@ -95,20 +95,24 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
             "engagements"
         ]
         # Only get engagements relevant for this org_unit
-        if any(engagements):
-            relevant_engagement = list(
+        if engagements:
+            relevant_engagements = list(
                 filter(
                     lambda eng: eng["org_unit_uuid"] == query_dict["uuid"], engagements
                 )
             )
-            if any(relevant_engagement):
-                to_date = one(relevant_engagement)["validity"]["to"]
+            if relevant_engagements:
+                to_dates = [
+                    engagement["validity"]["to"] for engagement in relevant_engagements
+                ]
 
-                # Check if engagement to_date is after today or None (still active)
-                if not to_date or (
-                    datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
-                ):
-                    return None
+                # Check if at least one of the engagements to_date is after
+                # today or None in which case there is an active engagement
+                for to_date in to_dates:
+                    if not to_date or (
+                        datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
+                    ):
+                        return None
 
         return UUID(manager_uuid)
     return None

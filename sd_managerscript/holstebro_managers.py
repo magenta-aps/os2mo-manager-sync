@@ -95,13 +95,13 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
             "engagements"
         ]
         # Only get engagements relevant for this org_unit
-        if any(engagements):
+        if engagements:
             relevant_engagements = list(
                 filter(
                     lambda eng: eng["org_unit_uuid"] == query_dict["uuid"], engagements
                 )
             )
-            if any(relevant_engagements):
+            if relevant_engagements:
                 to_dates = [
                     engagement["validity"]["to"] for engagement in relevant_engagements
                 ]

@@ -16,6 +16,7 @@ from ramodels.mo._shared import Validity  # type: ignore
 
 from .config import get_settings
 from .exceptions import ConflictingManagers
+from .filters import remove_org_units_without_associations
 from .models import EngagementFrom
 from .models import Manager
 from .models import ManagerLevel
@@ -573,23 +574,20 @@ async def create_update_manager(
     logger.debug("Creating manager object.", org_unit=org_unit)
     manager_level = await get_manager_level(gql_client, org_unit)
 
-    if any(org_unit.associations):
-        manager: Manager = await create_manager_object(
-            org_unit,
-            manager_level,
-        )
-        logger.debug("Update manager role.", manager=manager)
-        if not dry_run:
-            await update_manager(gql_client, org_unit.parent.uuid, manager)
+    manager: Manager = await create_manager_object(
+        org_unit,
+        manager_level,
+    )
+    logger.debug("Update manager role.", manager=manager)
+    if not dry_run:
+        await update_manager(gql_client, org_unit.parent.uuid, manager)
 
-        # If parent org-unit has "led-adm" in name,
-        # it's parent org-unit will also have the manager assigned
-        if org_unit.parent.name.strip()[-7:] == "led-adm":
-            logger.debug(
-                "Parent unit is 'led-adm' - manager will also be assigned here"
-            )
-            if not dry_run:
-                await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
+    # If parent org-unit has "led-adm" in name,
+    # it's parent org-unit will also have the manager assigned
+    if org_unit.parent.name.strip()[-7:] == "led-adm":
+        logger.debug("Parent unit is 'led-adm' - manager will also be assigned here")
+        if not dry_run:
+            await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
 async def update_mo_managers(
@@ -618,11 +616,14 @@ async def update_mo_managers(
     logger.debug("Manager org units", manager_org_units=manager_org_units)
 
     logger.info("Filter Managers")
-    org_units = [
+    manager_org_units = [
         await filter_managers(gql_client, org_unit) for org_unit in manager_org_units
     ]
+    # Remove the _leder units without associations to the parent "main" unit
+    manager_org_units = remove_org_units_without_associations(manager_org_units)
+
     logger.info("Updating Managers")
-    for org_unit in org_units:
+    for org_unit in manager_org_units:
         await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
     logger.info("Updating managers complete!")

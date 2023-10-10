@@ -29,6 +29,7 @@ from sd_managerscript.holstebro_managers import get_unengaged_managers
 from sd_managerscript.holstebro_managers import terminate_association
 from sd_managerscript.holstebro_managers import terminate_manager
 from sd_managerscript.holstebro_managers import update_manager
+from sd_managerscript.holstebro_managers import update_mo_managers
 from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
@@ -580,3 +581,19 @@ async def test_create_update_manager_led_adm(
     await create_update_manager(gql_client, org_unit)
 
     mock_update_manager.assert_has_calls(calls, any_order=True)
+
+
+class TestUpdateMoManagers:
+    @patch("sd_managerscript.holstebro_managers.remove_org_unit_without_associations")
+    async def test_manager_units_without_associations_are_removed(
+        self,
+        mock_remove_org_unit_without_associations: AsyncMock,
+    ) -> None:
+        # Arrange
+        gql_client = AsyncMock()
+
+        # Act
+        await update_mo_managers(gql_client, uuid4(), uuid4())
+
+        # Assert
+        mock_remove_org_unit_without_associations.assert_called_once()

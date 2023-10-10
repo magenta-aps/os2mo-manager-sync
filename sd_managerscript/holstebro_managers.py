@@ -245,24 +245,32 @@ async def get_manager_org_units(
 
 async def get_current_manager(
     gql_client: PersistentGraphQLClient, org_unit_uuid: UUID
-) -> UUID | None:
+) -> Manager | None:
     """
-    Checks if org-unit has an existing manager object. If so, returns UUID
-    of that Manager object. Otherwise returns None.
+    Get the current manager or None, if the manager does not exist
 
     Args:
         gql_client: GraphQL client
         org_unit_uuid: UUID of the org-unit we want to fetch the manager from.
-    Retuns:
-        UUID or None - UUID if manager position is present otherwise None
+    Returns:
+        The manager or None, if the manager does not exist
     """
     variables = {"uuid": str(org_unit_uuid)}
     ou_manager = await query_graphql(gql_client, CURRENT_MANAGER, variables)
     managers = one(one(ou_manager["org_units"])["objects"])["managers"]
     if managers:
         logger.debug("Manager found", manager=managers)
-        return UUID(one(managers)["uuid"])
-
+        manager = one(managers)
+        return Manager(
+            employee=UUID(manager["employee_uuid"]),
+            manager_level=ManagerLevel(uuid=UUID(manager["manager_level_uuid"])),
+            manager_type=ManagerType(uuid=UUID(manager["manager_type_uuid"])),
+            validity=Validity(
+                from_date=datetime.fromisoformat(manager["validity"]["from"])
+            ),
+            org_unit=UUID(manager["org_unit_uuid"]),
+            uuid=UUID(manager["uuid"]),
+        )
     return None
 
 

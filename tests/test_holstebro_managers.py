@@ -31,6 +31,7 @@ from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
+from sd_managerscript.models import ManagerType
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
@@ -389,17 +390,49 @@ async def test_get_current_manager_uuid(
 ) -> None:
     """Test "get_current_manager" returns correct values"""
 
-    ou_uuid = "3e702dd1-4103-4116-bb2d-b150aebe807d"
-    manager_uuid = "27935dbb-c173-4116-a4b5-75022315749d"
+    ou_uuid = uuid4()
+    manager_uuid = uuid4()
+    employee_uuid = uuid4()
+    manager_level_uuid = uuid4()
+    manager_type_uuid = uuid4()
+
+    from_ = datetime.now()
 
     return_dict: dict = {
-        "org_units": [{"objects": [{"managers": [{"uuid": manager_uuid}]}]}]
+        "org_units": [
+            {
+                "objects": [
+                    {
+                        "managers": [
+                            {
+                                "uuid": str(manager_uuid),
+                                "employee_uuid": str(employee_uuid),
+                                "manager_level_uuid": str(manager_level_uuid),
+                                "manager_type_uuid": str(manager_type_uuid),
+                                "org_unit_uuid": str(ou_uuid),
+                                "validity": {
+                                    "from": from_.isoformat(),
+                                    "to": None,
+                                },
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 
     mock_query_graphql.return_value = return_dict
-    returned_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
+    manager = await get_current_manager(gql_client, ou_uuid)
 
-    assert returned_uuid == UUID(manager_uuid)
+    assert manager == Manager(
+        employee=employee_uuid,
+        manager_level=ManagerLevel(uuid=manager_level_uuid),
+        manager_type=ManagerType(uuid=manager_type_uuid),
+        validity=Validity(from_date=from_),
+        org_unit=ou_uuid,
+        uuid=manager_uuid,
+    )
 
 
 @patch("sd_managerscript.holstebro_managers.query_graphql")

@@ -17,19 +17,16 @@ from gql import gql  # type: ignore
 from ramodels.mo import Validity  # type: ignore
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
+from sd_managerscript.filters import filter_managers
 from sd_managerscript.holstebro_managers import check_manager_engagement
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
-from sd_managerscript.holstebro_managers import filter_managers
-from sd_managerscript.holstebro_managers import get_active_engagements
 from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import get_unengaged_managers
-from sd_managerscript.holstebro_managers import terminate_association
-from sd_managerscript.holstebro_managers import terminate_manager
 from sd_managerscript.holstebro_managers import update_manager
-from sd_managerscript.holstebro_managers import update_mo_managers
+from sd_managerscript.mo import get_active_engagements
 from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
@@ -37,6 +34,8 @@ from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
+from sd_managerscript.terminate import terminate_association
+from sd_managerscript.terminate import terminate_manager
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_create_update_manager_data
@@ -228,25 +227,28 @@ async def test_get_unengaged_managers(
 @pytest.mark.parametrize(
     "employee_uuid, engagement, expected", get_active_engagements_data()
 )
-@patch("sd_managerscript.holstebro_managers.query_graphql")
+@patch("sd_managerscript.mo.query_graphql")
 async def test_get_active_engagements(
     mock_query_gql: AsyncMock,
-    gql_client: MagicMock,
     employee_uuid: UUID,
     engagement: dict,
     expected: dict,
 ) -> None:
     """Test the "get_active_engagements" method returns correct Manager objects."""
-
+    # Arrange
+    gql_client = AsyncMock()
     mock_query_gql.return_value = engagement
+
+    # Act
     returned_managers = await get_active_engagements(gql_client, employee_uuid)
 
+    # Assert
     assert returned_managers == EngagementFrom.parse_obj(expected)
 
 
 @pytest.mark.parametrize("org_unit, engagements, expected", get_filter_managers_data())
-@patch("sd_managerscript.holstebro_managers.terminate_association")
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.terminate.terminate_association")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers(
     mock_get_active_engagements: MagicMock,
     gql_client: MagicMock,
@@ -263,7 +265,7 @@ async def test_filter_managers(
     assert returned_org_unit == expected
 
 
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers_error_raised(
     mock_get_active_engagements: MagicMock, gql_client: MagicMock
 ) -> None:
@@ -284,8 +286,8 @@ async def test_filter_managers_error_raised(
 @pytest.mark.parametrize(
     "org_unit, engagement_return, association_uuids", get_filter_managers_terminate()
 )
-@patch("sd_managerscript.holstebro_managers.terminate_association")
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.filters.terminate_association")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers_calls_terminate(
     mock_get_active_engagements: MagicMock,
     mock_terminate_association: MagicMock,
@@ -313,7 +315,7 @@ async def test_filter_managers_calls_terminate(
         "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
     ],
 )
-@patch("sd_managerscript.holstebro_managers.execute_mutator", new_callable=AsyncMock)
+@patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_association(
     mock_execute_mutator: AsyncMock,
     gql_client: MagicMock,
@@ -331,7 +333,7 @@ async def test_terminate_association(
     """
     )
 
-    input = {
+    input_ = {
         "input": {
             "uuid": association_uuid,
             "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
@@ -340,7 +342,7 @@ async def test_terminate_association(
 
     await terminate_association(gql_client, UUID(association_uuid))
 
-    mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input)
+    mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input_)
 
 
 @pytest.mark.parametrize(
@@ -350,7 +352,7 @@ async def test_terminate_association(
         "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
     ],
 )
-@patch("sd_managerscript.holstebro_managers.execute_mutator", new_callable=AsyncMock)
+@patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_manager(
     mock_execute_mutator: AsyncMock,
     gql_client: MagicMock,
@@ -581,19 +583,3 @@ async def test_create_update_manager_led_adm(
     await create_update_manager(gql_client, org_unit)
 
     mock_update_manager.assert_has_calls(calls, any_order=True)
-
-
-class TestUpdateMoManagers:
-    @patch("sd_managerscript.holstebro_managers.remove_org_unit_without_associations")
-    async def test_manager_units_without_associations_are_removed(
-        self,
-        mock_remove_org_unit_without_associations: AsyncMock,
-    ) -> None:
-        # Arrange
-        gql_client = AsyncMock()
-
-        # Act
-        await update_mo_managers(gql_client, uuid4(), uuid4())
-
-        # Assert
-        mock_remove_org_unit_without_associations.assert_called_once()

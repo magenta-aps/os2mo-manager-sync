@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from asyncio import gather
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 from typing import Any
 from uuid import UUID
@@ -15,23 +13,19 @@ from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from ramodels.mo._shared import Validity  # type: ignore
 
 from .config import get_settings
-from .exceptions import ConflictingManagers
-from .filters import remove_org_units_without_associations
-from .models import EngagementFrom
+from .filters import filter_manager_org_units
 from .models import Manager
 from .models import ManagerLevel
 from .models import ManagerType
 from .models import OrgUnitManagers
-from .queries import ASSOCIATION_TERMINATE
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
-from .queries import MANAGER_TERMINATE
-from .queries import QUERY_ENGAGEMENTS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
 from .queries import QUERY_ORG_UNITS
 from .queries import QUERY_ROOT_MANAGER_ENGAGEMENTS
 from .queries import UPDATE_MANAGER
+from .terminate import terminate_manager
 from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit
@@ -249,186 +243,6 @@ async def get_manager_org_units(
     return managers
 
 
-async def terminate_association(
-    gql_client: PersistentGraphQLClient, association_uuid: UUID
-) -> None:
-    """
-    Terminates association with "_leder" org_unit (updates end date).
-
-    Args:
-        gql_client: GraphQL client
-        association_uuid: UUID of the association to terminate
-    Returns:
-        Nothing
-    """
-
-    input = {
-        "input": {
-            "uuid": str(association_uuid),
-            "to": datetime.today().date().isoformat(),
-        }
-    }
-
-    await execute_mutator(gql_client, ASSOCIATION_TERMINATE, input)
-    logger.info("Association terminated!", input=input)
-
-
-async def terminate_manager(
-    gql_client: PersistentGraphQLClient, manager_uuid: UUID, dry_run: bool = False
-) -> None:
-    """
-    Terminates manager role in parent org-unit (updates end date).
-
-    Args:
-        gql_client: GraphQL client
-        manager_uuid: UUID of the association to terminate
-        dry_run: If true, do not actually perform write operations to MO
-    Returns:
-        Nothing
-    """
-
-    # TODO: unit test for dry run
-
-    input = {
-        "input": {
-            "uuid": str(manager_uuid),
-            "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
-        }
-    }
-
-    if not dry_run:
-        await execute_mutator(gql_client, MANAGER_TERMINATE, input)
-    logger.info("Manager terminated!", input=input)
-
-
-async def get_active_engagements(
-    gql_client: PersistentGraphQLClient, employee_uuid: UUID
-) -> EngagementFrom:
-    """
-    Checks the manager has an active engagement and returns the latest, if any.
-
-    Args:
-        gql_client: GraphQL client
-        employee_uuid: UUID for the employee we want to fetch engagements for.
-    Returns:
-        dict: dict with employee uuid and engagement from date.
-
-    """
-
-    variables = {"uuid": employee_uuid}
-    engagements = await query_graphql(gql_client, QUERY_ENGAGEMENTS, variables)
-    logger.debug("Engagements fetched.", response=engagements)
-    engagement_from = None
-
-    if engagements["engagements"]:
-        latest_engagement = max(
-            engagements["engagements"],
-            key=lambda eng: datetime.fromisoformat(
-                one(eng["objects"])["validity"]["from"]
-            ),
-        )
-
-        # We add "from date" for lateste engagement to compare with other potential managers
-        engagement_from = one(latest_engagement["objects"])["validity"]["from"]
-
-    return EngagementFrom(employee_uuid=employee_uuid, engagement_from=engagement_from)
-
-
-async def filter_managers(
-    gql_client: PersistentGraphQLClient, org_unit: OrgUnitManagers
-) -> OrgUnitManagers:
-    """
-    Checks potential managers are actually employeed.
-    The manager with latest hiring date is returned inside org-unit object.
-    If more than one employee has the latest engagement date we raise an exception.
-    If none of the potential managers have an engagement, Managers list will be returned empty.
-
-    Args:
-        gql_client: GraphQL client
-        org_unit: OrgUnitManager object
-    Returns:
-        OrgUnitManager object
-    """
-
-    # get active engagements for each manager
-    org_unit_dict = jsonable_encoder(org_unit)
-
-    active_engagements = await gather(
-        *map(
-            lambda association: get_active_engagements(
-                gql_client, association["employee_uuid"]
-            ),
-            org_unit_dict["associations"],
-        )
-    )
-    active_engagements = list(map(jsonable_encoder, active_engagements))
-
-    # Filter away non-active engagements.
-    filtered_engagements = list(
-        filter(lambda eng: bool(eng["engagement_from"]), active_engagements)
-    )
-
-    # If any managers with engagements. -Get manager with latests engagement from date.
-    if any(filtered_engagements):
-        # We check there's max one employee with the latest from date or we raise an exception
-        date_list = [
-            datetime.fromisoformat(eng_dict["engagement_from"])
-            for eng_dict in filtered_engagements
-        ]
-        selected_employees = []
-        filtered_managers = []
-        for engagement in filtered_engagements:
-            if (
-                datetime.fromisoformat(engagement["engagement_from"]) == max(date_list)
-                and engagement["employee_uuid"] not in selected_employees
-            ):
-                filtered_managers.append(engagement)
-                selected_employees.append(engagement["employee_uuid"])
-
-        if len(filtered_managers) > 1:
-            raise ConflictingManagers(
-                "Two or more employees have same engagement from"
-                f"date, in org-unit with uuid: {org_unit_dict['uuid']}"
-            )
-
-        associations = list(
-            filter(
-                lambda association: association["employee_uuid"]
-                == one(filtered_managers)["employee_uuid"],
-                org_unit_dict["associations"],
-            )
-        )
-
-        redundant_associations = [
-            UUID(association["uuid"])
-            for association in org_unit_dict["associations"]
-            if association not in associations
-        ]
-
-        logger.debug(
-            "Associations collected.",
-            associations=associations,
-            redundant_associations=redundant_associations,
-        )
-    else:
-        associations = []
-        redundant_associations = [
-            UUID(asso["uuid"]) for asso in org_unit_dict["associations"]
-        ]
-        logger.debug(
-            "No associations collected.", redundant_associations=redundant_associations
-        )
-    # Terminate associations for all other employees in the
-    # "_leder" org-unit, apart from the selected manager.
-
-    for association_uuid in redundant_associations:
-        await terminate_association(gql_client, association_uuid)
-
-    org_unit_dict["associations"] = associations
-
-    return OrgUnitManagers.parse_obj(org_unit_dict)
-
-
 async def get_current_manager(
     gql_client: PersistentGraphQLClient, org_unit_uuid: UUID
 ) -> UUID | None:
@@ -615,12 +429,8 @@ async def update_mo_managers(
     )
     logger.debug("Manager org units", manager_org_units=manager_org_units)
 
-    logger.info("Filter Managers")
-    manager_org_units = [
-        await filter_managers(gql_client, org_unit) for org_unit in manager_org_units
-    ]
-    # Remove the _leder units without associations to the parent "main" unit
-    manager_org_units = remove_org_units_without_associations(manager_org_units)
+    logger.info("Filter managers org units")
+    manager_org_units = await filter_manager_org_units(gql_client, manager_org_units)
 
     logger.info("Updating Managers")
     for org_unit in manager_org_units:

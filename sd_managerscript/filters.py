@@ -9,10 +9,10 @@ from fastapi.encoders import jsonable_encoder
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
-from sd_managerscript.exceptions import ConflictingManagers
-from sd_managerscript.mo import get_active_engagements
-from sd_managerscript.models import OrgUnitManagers
-from sd_managerscript.terminate import terminate_association
+from .exceptions import ConflictingManagers
+from .mo import get_active_engagements
+from .models import OrgUnitManagers
+from .terminate import terminate_association
 
 logger = structlog.get_logger()
 

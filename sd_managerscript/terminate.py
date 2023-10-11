@@ -7,9 +7,9 @@ from uuid import UUID
 import structlog
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
-from sd_managerscript.queries import ASSOCIATION_TERMINATE
-from sd_managerscript.queries import MANAGER_TERMINATE
-from sd_managerscript.util import execute_mutator
+from .queries import ASSOCIATION_TERMINATE
+from .queries import MANAGER_TERMINATE
+from .util import execute_mutator
 
 
 logger = structlog.get_logger()

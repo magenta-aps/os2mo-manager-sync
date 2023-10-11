@@ -7,9 +7,9 @@ import structlog
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
-from sd_managerscript.models import EngagementFrom
-from sd_managerscript.queries import QUERY_ENGAGEMENTS
-from sd_managerscript.util import query_graphql
+from .models import EngagementFrom
+from .queries import QUERY_ENGAGEMENTS
+from .util import query_graphql
 
 logger = structlog.get_logger()
 

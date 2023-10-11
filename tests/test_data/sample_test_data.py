@@ -1124,7 +1124,20 @@ updata_manager_data = [
         }
     """
         ),
-        "585675fe-8e2a-43a1-b0d9-7879a669c347",
+        Manager(
+            uuid=UUID("585675fe-8e2a-43a1-b0d9-7879a669c347"),
+            manager_level=ManagerLevel(
+                uuid=UUID("eeeba017-f838-4742-b57e-44c2f5437111")
+            ),
+            manager_type=ManagerType(uuid=UUID("54d6ad15-d966-4523-8728-37718e3c46a8")),
+            employee=UUID("03ff3b1a-a16b-4ea6-b372-065a77f849cb"),
+            responsibility=UUID("d82039a5-f2d5-48e4-8eab-8c9f7694e16f"),
+            org_unit=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
+            validity=Validity(
+                from_date=datetime(2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)),
+                to_date=None,
+            ),
+        ),
         {
             "input": {
                 "uuid": "585675fe-8e2a-43a1-b0d9-7879a669c347",
@@ -1392,7 +1405,9 @@ def get_filter_managers_terminate() -> list[tuple[OrgUnitManagers, object, list[
     return filter_managers_terminate
 
 
-def get_update_managers_data() -> list[tuple[Manager, str, Any, str | None, object]]:
+def get_update_managers_data() -> (
+    list[tuple[Manager, str, Any, Manager | None, object]]
+):
     return updata_manager_data
 
 

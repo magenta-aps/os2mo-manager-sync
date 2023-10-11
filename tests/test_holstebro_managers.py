@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from collections.abc import Generator
+from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from unittest import mock
@@ -25,6 +26,7 @@ from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import get_unengaged_managers
+from sd_managerscript.holstebro_managers import is_manager_correct
 from sd_managerscript.holstebro_managers import update_manager
 from sd_managerscript.mo import get_active_engagements
 from sd_managerscript.models import Association
@@ -453,7 +455,7 @@ async def test_get_current_manager_none(
 
 
 @pytest.mark.parametrize(
-    "manager, org_unit_uuid, query, current_manager_uuid, variables",
+    "manager, org_unit_uuid, query, current_manager, variables",
     get_update_managers_data(),
 )
 @patch("sd_managerscript.holstebro_managers.execute_mutator")
@@ -465,16 +467,103 @@ async def test_update_manager_object(
     manager: Manager,
     org_unit_uuid: UUID,
     query: str,
-    current_manager_uuid: str,
+    current_manager: str,
     variables: dict,
 ) -> None:
     """Test update_manager can update and create new manager object"""
 
-    mock_get_current_manager.return_value = current_manager_uuid
+    mock_get_current_manager.return_value = current_manager
 
     await update_manager(gql_client, org_unit_uuid, manager)
 
     mock_execute_mutator.assert_called_once_with(gql_client, query, variables)
+
+
+@patch("sd_managerscript.holstebro_managers.execute_mutator")
+@patch("sd_managerscript.holstebro_managers.get_current_manager")
+async def test_manager_not_updated_when_already_correct(
+    mock_get_current_manager: AsyncMock,
+    mock_execute_mutator: AsyncMock,
+    gql_client: MagicMock,
+) -> None:
+    """
+    This test ensures that we do not try to update a manager (and hence
+    create a new registration in the LoRa DB) when the manager data in MO
+    is already set correctly.
+    """
+
+    # Arrange
+
+    employee = uuid4()
+    manager_level = ManagerLevel(uuid=uuid4())
+    manager_type = ManagerType(uuid=uuid4())
+    org_unit = uuid4()
+
+    current_manager = Manager(
+        uuid=uuid4(),
+        manager_level=manager_level,
+        manager_type=manager_type,
+        employee=employee,
+        org_unit=org_unit,
+        validity=Validity(
+            from_date=datetime(2022, 8, 1, 0, 0),
+            to_date=None,
+        ),
+    )
+    potential_new_manager = Manager(
+        employee=employee,
+        org_unit=org_unit,
+        manager_level=manager_level,
+        manager_type=manager_type,
+        validity=Validity(
+            from_date=datetime.today().date().isoformat(),
+            to_date=None,
+        ),
+    )
+
+    mock_get_current_manager.return_value = current_manager
+
+    # Act
+    await update_manager(gql_client, org_unit, potential_new_manager)
+
+    # Assert
+    mock_execute_mutator.assert_not_awaited()
+
+
+def test_is_manager_correct() -> None:
+    org_unit = uuid4()
+    current_manager = Manager(
+        uuid=uuid4(),
+        manager_level=ManagerLevel(uuid=uuid4()),
+        manager_type=ManagerType(uuid=uuid4()),
+        employee=uuid4(),
+        org_unit=org_unit,
+        validity=Validity(
+            from_date=datetime(2022, 8, 1, 0, 0),
+            to_date=None,
+        ),
+    )
+
+    # Test that False is returned if there is a mismatch in one of
+    # the properties
+
+    new_manager = deepcopy(current_manager)
+    new_manager.manager_type = ManagerType(uuid=uuid4())
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    new_manager = deepcopy(current_manager)
+    new_manager.manager_level = ManagerLevel(uuid=uuid4())
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    new_manager = deepcopy(current_manager)
+    assert not is_manager_correct(current_manager, new_manager, uuid4())
+
+    new_manager = deepcopy(current_manager)
+    new_manager.employee = uuid4()
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    # Ensure that True is returned if everything match
+    assert is_manager_correct(current_manager, current_manager, org_unit)
 
 
 @pytest.mark.parametrize(

@@ -259,7 +259,7 @@ async def get_current_manager(
     ou_manager = await query_graphql(gql_client, CURRENT_MANAGER, variables)
     managers = one(one(ou_manager["org_units"])["objects"])["managers"]
     if managers:
-        logger.debug("Manager found", manager=managers)
+        logger.debug("Manager found", manager=managers, org_unit=str(org_unit_uuid))
         manager = one(managers)
         return Manager(
             employee=UUID(manager["employee_uuid"]),
@@ -271,6 +271,7 @@ async def get_current_manager(
             org_unit=UUID(manager["org_unit_uuid"]),
             uuid=UUID(manager["uuid"]),
         )
+    logger.debug("Manager not found", org_unit=str(org_unit_uuid))
     return None
 
 
@@ -308,6 +309,25 @@ async def create_manager_object(
     return manager
 
 
+def is_manager_correct(
+    current_manager: Manager,
+    new_manager: Manager,
+    org_unit: UUID,
+) -> bool:
+    logger.debug(
+        "Comparing managers",
+        current_manager=current_manager,
+        new_manager=new_manager,
+        org_unit=org_unit,
+    )
+    return (
+        current_manager.manager_type == new_manager.manager_type
+        and current_manager.manager_level == new_manager.manager_level
+        and current_manager.org_unit == org_unit
+        and current_manager.employee == new_manager.employee
+    )
+
+
 async def update_manager(
     gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, manager_obj: Manager
 ) -> None:
@@ -330,17 +350,22 @@ async def update_manager(
     manager_dict["person"] = manager_dict.pop("employee")
     manager_dict["org_unit"] = str(org_unit_uuid)
 
-    current_manager_uuid = await get_current_manager(gql_client, org_unit_uuid)
+    current_manager = await get_current_manager(gql_client, org_unit_uuid)
 
-    if current_manager_uuid:
-        manager_dict["uuid"] = str(current_manager_uuid)
-        variables = {"input": manager_dict}
-        await execute_mutator(gql_client, UPDATE_MANAGER, variables)
-        logger.info(f"Manager updated: {manager_dict}")
-    else:
+    if current_manager is None:
         variables = {"input": manager_dict}
         await execute_mutator(gql_client, CREATE_MANAGER, variables)
         logger.info(f"Manager created: {manager_dict}")
+        return
+
+    manager_correct = is_manager_correct(current_manager, manager_obj, org_unit_uuid)
+    logger.debug("Check if manager correct", correct=manager_correct)
+
+    if not manager_correct:
+        manager_dict["uuid"] = str(current_manager.uuid)
+        variables = {"input": manager_dict}
+        await execute_mutator(gql_client, UPDATE_MANAGER, variables)
+        logger.info(f"Manager updated: {manager_dict}")
 
 
 async def get_manager_level(

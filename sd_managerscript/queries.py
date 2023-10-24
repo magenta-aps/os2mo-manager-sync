@@ -58,15 +58,23 @@ QUERY_ENGAGEMENTS = gql(
 CURRENT_MANAGER = gql(
     """
     query ($uuid: [UUID!]!){
-  org_units(uuids: $uuid) {
-    objects {
-      managers {
-        uuid
+      org_units(uuids: $uuid) {
+        objects {
+          managers {
+            uuid
+            employee_uuid
+            manager_level_uuid
+            manager_type_uuid
+            org_unit_uuid
+            validity {
+              from
+              to
+            }
+          }
+        }
       }
     }
-  }
-}
-"""
+    """
 )
 
 UPDATE_MANAGER = gql(

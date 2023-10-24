@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from collections.abc import Generator
+from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from unittest import mock
@@ -17,25 +18,27 @@ from gql import gql  # type: ignore
 from ramodels.mo import Validity  # type: ignore
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
+from sd_managerscript.filters import filter_managers
 from sd_managerscript.holstebro_managers import check_manager_engagement
 from sd_managerscript.holstebro_managers import create_manager_object
 from sd_managerscript.holstebro_managers import create_update_manager
-from sd_managerscript.holstebro_managers import filter_managers
-from sd_managerscript.holstebro_managers import get_active_engagements
 from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import get_unengaged_managers
-from sd_managerscript.holstebro_managers import terminate_association
-from sd_managerscript.holstebro_managers import terminate_manager
+from sd_managerscript.holstebro_managers import is_manager_correct
 from sd_managerscript.holstebro_managers import update_manager
+from sd_managerscript.mo import get_active_engagements
 from sd_managerscript.models import Association
 from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
+from sd_managerscript.models import ManagerType
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
+from sd_managerscript.terminate import terminate_association
+from sd_managerscript.terminate import terminate_manager
 from tests.test_data.sample_test_data import get_active_engagements_data  # type: ignore
 from tests.test_data.sample_test_data import get_create_manager_data
 from tests.test_data.sample_test_data import get_create_update_manager_data
@@ -227,25 +230,28 @@ async def test_get_unengaged_managers(
 @pytest.mark.parametrize(
     "employee_uuid, engagement, expected", get_active_engagements_data()
 )
-@patch("sd_managerscript.holstebro_managers.query_graphql")
+@patch("sd_managerscript.mo.query_graphql")
 async def test_get_active_engagements(
     mock_query_gql: AsyncMock,
-    gql_client: MagicMock,
     employee_uuid: UUID,
     engagement: dict,
     expected: dict,
 ) -> None:
     """Test the "get_active_engagements" method returns correct Manager objects."""
-
+    # Arrange
+    gql_client = AsyncMock()
     mock_query_gql.return_value = engagement
+
+    # Act
     returned_managers = await get_active_engagements(gql_client, employee_uuid)
 
+    # Assert
     assert returned_managers == EngagementFrom.parse_obj(expected)
 
 
 @pytest.mark.parametrize("org_unit, engagements, expected", get_filter_managers_data())
-@patch("sd_managerscript.holstebro_managers.terminate_association")
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.terminate.terminate_association")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers(
     mock_get_active_engagements: MagicMock,
     gql_client: MagicMock,
@@ -262,7 +268,7 @@ async def test_filter_managers(
     assert returned_org_unit == expected
 
 
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers_error_raised(
     mock_get_active_engagements: MagicMock, gql_client: MagicMock
 ) -> None:
@@ -283,8 +289,8 @@ async def test_filter_managers_error_raised(
 @pytest.mark.parametrize(
     "org_unit, engagement_return, association_uuids", get_filter_managers_terminate()
 )
-@patch("sd_managerscript.holstebro_managers.terminate_association")
-@patch("sd_managerscript.holstebro_managers.get_active_engagements")
+@patch("sd_managerscript.filters.terminate_association")
+@patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers_calls_terminate(
     mock_get_active_engagements: MagicMock,
     mock_terminate_association: MagicMock,
@@ -312,7 +318,7 @@ async def test_filter_managers_calls_terminate(
         "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
     ],
 )
-@patch("sd_managerscript.holstebro_managers.execute_mutator", new_callable=AsyncMock)
+@patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_association(
     mock_execute_mutator: AsyncMock,
     gql_client: MagicMock,
@@ -330,7 +336,7 @@ async def test_terminate_association(
     """
     )
 
-    input = {
+    input_ = {
         "input": {
             "uuid": association_uuid,
             "to": (datetime.today() - timedelta(days=0)).date().isoformat(),
@@ -339,7 +345,7 @@ async def test_terminate_association(
 
     await terminate_association(gql_client, UUID(association_uuid))
 
-    mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input)
+    mock_execute_mutator.assert_called_once_with(gql_client, mut_query, input_)
 
 
 @pytest.mark.parametrize(
@@ -349,7 +355,7 @@ async def test_terminate_association(
         "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
     ],
 )
-@patch("sd_managerscript.holstebro_managers.execute_mutator", new_callable=AsyncMock)
+@patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_manager(
     mock_execute_mutator: AsyncMock,
     gql_client: MagicMock,
@@ -386,17 +392,49 @@ async def test_get_current_manager_uuid(
 ) -> None:
     """Test "get_current_manager" returns correct values"""
 
-    ou_uuid = "3e702dd1-4103-4116-bb2d-b150aebe807d"
-    manager_uuid = "27935dbb-c173-4116-a4b5-75022315749d"
+    ou_uuid = uuid4()
+    manager_uuid = uuid4()
+    employee_uuid = uuid4()
+    manager_level_uuid = uuid4()
+    manager_type_uuid = uuid4()
+
+    from_ = datetime.now()
 
     return_dict: dict = {
-        "org_units": [{"objects": [{"managers": [{"uuid": manager_uuid}]}]}]
+        "org_units": [
+            {
+                "objects": [
+                    {
+                        "managers": [
+                            {
+                                "uuid": str(manager_uuid),
+                                "employee_uuid": str(employee_uuid),
+                                "manager_level_uuid": str(manager_level_uuid),
+                                "manager_type_uuid": str(manager_type_uuid),
+                                "org_unit_uuid": str(ou_uuid),
+                                "validity": {
+                                    "from": from_.isoformat(),
+                                    "to": None,
+                                },
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 
     mock_query_graphql.return_value = return_dict
-    returned_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
+    manager = await get_current_manager(gql_client, ou_uuid)
 
-    assert returned_uuid == UUID(manager_uuid)
+    assert manager == Manager(
+        employee=employee_uuid,
+        manager_level=ManagerLevel(uuid=manager_level_uuid),
+        manager_type=ManagerType(uuid=manager_type_uuid),
+        validity=Validity(from_date=from_),
+        org_unit=ou_uuid,
+        uuid=manager_uuid,
+    )
 
 
 @patch("sd_managerscript.holstebro_managers.query_graphql")
@@ -417,7 +455,7 @@ async def test_get_current_manager_none(
 
 
 @pytest.mark.parametrize(
-    "manager, org_unit_uuid, query, current_manager_uuid, variables",
+    "manager, org_unit_uuid, query, current_manager, variables",
     get_update_managers_data(),
 )
 @patch("sd_managerscript.holstebro_managers.execute_mutator")
@@ -429,16 +467,103 @@ async def test_update_manager_object(
     manager: Manager,
     org_unit_uuid: UUID,
     query: str,
-    current_manager_uuid: str,
+    current_manager: str,
     variables: dict,
 ) -> None:
     """Test update_manager can update and create new manager object"""
 
-    mock_get_current_manager.return_value = current_manager_uuid
+    mock_get_current_manager.return_value = current_manager
 
     await update_manager(gql_client, org_unit_uuid, manager)
 
     mock_execute_mutator.assert_called_once_with(gql_client, query, variables)
+
+
+@patch("sd_managerscript.holstebro_managers.execute_mutator")
+@patch("sd_managerscript.holstebro_managers.get_current_manager")
+async def test_manager_not_updated_when_already_correct(
+    mock_get_current_manager: AsyncMock,
+    mock_execute_mutator: AsyncMock,
+    gql_client: MagicMock,
+) -> None:
+    """
+    This test ensures that we do not try to update a manager (and hence
+    create a new registration in the LoRa DB) when the manager data in MO
+    is already set correctly.
+    """
+
+    # Arrange
+
+    employee = uuid4()
+    manager_level = ManagerLevel(uuid=uuid4())
+    manager_type = ManagerType(uuid=uuid4())
+    org_unit = uuid4()
+
+    current_manager = Manager(
+        uuid=uuid4(),
+        manager_level=manager_level,
+        manager_type=manager_type,
+        employee=employee,
+        org_unit=org_unit,
+        validity=Validity(
+            from_date=datetime(2022, 8, 1, 0, 0),
+            to_date=None,
+        ),
+    )
+    potential_new_manager = Manager(
+        employee=employee,
+        org_unit=org_unit,
+        manager_level=manager_level,
+        manager_type=manager_type,
+        validity=Validity(
+            from_date=datetime.today().date().isoformat(),
+            to_date=None,
+        ),
+    )
+
+    mock_get_current_manager.return_value = current_manager
+
+    # Act
+    await update_manager(gql_client, org_unit, potential_new_manager)
+
+    # Assert
+    mock_execute_mutator.assert_not_awaited()
+
+
+def test_is_manager_correct() -> None:
+    org_unit = uuid4()
+    current_manager = Manager(
+        uuid=uuid4(),
+        manager_level=ManagerLevel(uuid=uuid4()),
+        manager_type=ManagerType(uuid=uuid4()),
+        employee=uuid4(),
+        org_unit=org_unit,
+        validity=Validity(
+            from_date=datetime(2022, 8, 1, 0, 0),
+            to_date=None,
+        ),
+    )
+
+    # Test that False is returned if there is a mismatch in one of
+    # the properties
+
+    new_manager = deepcopy(current_manager)
+    new_manager.manager_type = ManagerType(uuid=uuid4())
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    new_manager = deepcopy(current_manager)
+    new_manager.manager_level = ManagerLevel(uuid=uuid4())
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    new_manager = deepcopy(current_manager)
+    assert not is_manager_correct(current_manager, new_manager, uuid4())
+
+    new_manager = deepcopy(current_manager)
+    new_manager.employee = uuid4()
+    assert not is_manager_correct(current_manager, new_manager, org_unit)
+
+    # Ensure that True is returned if everything match
+    assert is_manager_correct(current_manager, current_manager, org_unit)
 
 
 @pytest.mark.parametrize(

@@ -42,8 +42,8 @@ async def query_org_unit(
     org_unit_dicts = await query_graphql(gql_client, query, variables)
 
     ou_model_list = [
-        OrgUnitManagers.parse_obj(one(org_unit["objects"]))
-        for org_unit in org_unit_dicts["org_units"]
+        OrgUnitManagers.parse_obj(one(org_unit["validities"]))
+        for org_unit in org_unit_dicts["org_units"]["objects"]
     ]
     return ou_model_list
 

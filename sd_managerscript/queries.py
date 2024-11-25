@@ -7,47 +7,61 @@ ORG_UNITS = "org_units"
 QUERY_ORG = gql("query {org { uuid }}")
 
 QUERY_ORG_UNIT_LEVEL = gql(
-    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {objects{org_unit_level_uuid}}}"""
-)
-
-QUERY_ORG_UNITS = gql(
     """
-    query ($uuid: [UUID!]!){
-        org_units (parents: $uuid){
+    query ($uuids: [UUID!]!) {
+        org_units (filter: {uuids: $uuids}) {
             objects {
-                uuid
-                name
-                child_count
-                associations {
-                    uuid
-                    org_unit_uuid
-                    employee_uuid
-                    association_type_uuid
-                    validity{
-                        from
-                        to
-                    }
-                }
-                parent{
-                    uuid
-                    name
-                    parent_uuid
+                validities {
                     org_unit_level_uuid
                 }
             }
         }
     }
+    """
+)
+
+QUERY_ORG_UNITS = gql(
+    """
+        query ($uuid: [UUID!]!) {
+            org_units(filter: { parent: { uuids: $uuid } }) {
+                objects {
+                    validities {
+                        uuid
+                        name
+                        child_count
+                        associations {
+                            uuid
+                            org_unit_uuid
+                            employee_uuid
+                            association_type_uuid
+                            validity {
+                                from
+                                to
+                            }
+                        }
+                        parent {
+                            uuid
+                            name
+                            parent_uuid
+                            org_unit_level_uuid
+                        }
+                    }
+                }
+            }
+        }
 """
 )
 
 QUERY_ENGAGEMENTS = gql(
     """
         query ($uuid: [UUID!]!){
-            engagements (employees: $uuid){
-                objects{
-                    validity{
-                        from
-                        to
+            engagements (filter: { employee: { uuids: $uuid, from_date: null, to_date: null }} ){
+                objects {
+                    validities {
+                        validity{
+                            from
+                            to
+                        }
                     }
                 }
             }
@@ -58,19 +72,21 @@ QUERY_ENGAGEMENTS = gql(
 CURRENT_MANAGER = gql(
     """
     query ($uuid: [UUID!]!){
-      org_units(uuids: $uuid) {
+      org_units(filter: { uuids: $uuid }) {
         objects {
-          managers {
-            uuid
-            employee_uuid
-            manager_level_uuid
-            manager_type_uuid
-            org_unit_uuid
-            validity {
-              from
-              to
+            validities {
+                managers {
+                    uuid
+                    employee_uuid
+                    manager_level_uuid
+                    manager_type_uuid
+                    org_unit_uuid
+                    validity {
+                        from
+                        to
+                    }
+                }
             }
-          }
         }
       }
     }
@@ -140,18 +156,20 @@ MANAGER_TERMINATE = gql(
 QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
     """
         query ($uuid: [UUID!]!){
-            org_units (uuids: $uuid){
-                uuid
-                objects{
-                    child_count
-                    managers{
+            org_units (filter: { uuids: $uuid }){
+                objects {
+                    validities {
                         uuid
-                        employee {
-                            engagements {
-                                org_unit_uuid
-                                validity{
-                                    from
-                                    to
+                        child_count
+                        managers {
+                            uuid
+                            employee {
+                                engagements {
+                                    org_unit_uuid
+                                    validity {
+                                        from
+                                        to
+                                    }
                                 }
                             }
                         }
@@ -165,18 +183,20 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
 QUERY_MANAGER_ENGAGEMENTS = gql(
     """
         query ($uuid: [UUID!]!){
-            org_units (parents: $uuid){
-                uuid
-                objects{
-                    child_count
-                    managers{
+            org_units (filter: { parent: { uuids: $uuid } }){
+                objects {
+                    validities {
                         uuid
-                        employee {
-                            engagements {
-                                org_unit_uuid
-                                validity{
-                                    from
-                                    to
+                        child_count
+                        managers{
+                            uuid
+                            employee {
+                                engagements {
+                                    org_unit_uuid
+                                    validity {
+                                        from
+                                        to
+                                    }
                                 }
                             }
                         }

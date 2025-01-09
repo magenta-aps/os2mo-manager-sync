@@ -469,4 +469,5 @@ async def update_mo_managers(
     for org_unit in manager_org_units:
         await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
+    logger.debug("hurra")
     logger.info("Updating managers complete!")

@@ -49,28 +49,30 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
     Example of query_dict:
 
     {
-        "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
         "objects": [
             {
-                "child_count": 2,
-                "managers": [
-                    {
-                        "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
-                        "employee": [
-                            {
-                                "engagements": [
-                                    {
-                                        "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
-                                        "validity": {
-                                            "from": "2022-11-20T00:00:00+01:00",
-                                            "to": None,
+                "validities: [{
+                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                    "child_count": 2,
+                    "managers": [
+                        {
+                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                            "employee": [
+                                {
+                                    "engagements": [
+                                        {
+                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
+                                            "validity": {
+                                                "from": "2022-11-20T00:00:00+01:00",
+                                                "to": None,
+                                            },
                                         },
-                                    },
-                                ]
-                            }
-                        ],
-                    }
-                ],
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }]
             }
         ],
     }
@@ -82,18 +84,20 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
     # (https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177686)
 
     # if org-unit has any managers
-    if one(query_dict["objects"])["managers"]:
-        manager_uuid = one(one(query_dict["objects"])["managers"])["uuid"]
+    if one(query_dict["validities"])["managers"]:
+        manager_uuid = one(one(query_dict["validities"])["managers"])["uuid"]
 
         # if employee has any engagements, check it's still active
-        engagements = one(one(one(query_dict["objects"])["managers"])["employee"])[
+        engagements = one(one(one(query_dict["validities"])["managers"])["employee"])[
             "engagements"
         ]
         # Only get engagements relevant for this org_unit
         if engagements:
             relevant_engagements = list(
                 filter(
-                    lambda eng: eng["org_unit_uuid"] == query_dict["uuid"], engagements
+                    lambda eng: eng["org_unit_uuid"]
+                    == one(query_dict["validities"])["uuid"],
+                    engagements,
                 )
             )
             if relevant_engagements:
@@ -148,7 +152,6 @@ async def check_manager_engagement(
         TODO: Might optimize this function to avoid checking for root_uuid:
         https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177689
     """
-
     # TODO: add unit test for recursive=False
 
     variables = {"uuid": str(org_unit_uuid)}
@@ -166,7 +169,7 @@ async def check_manager_engagement(
         # Check if manager of root org-unit has active engagement
         managers_to_terminate = [
             out
-            for org_unit in data["org_units"]
+            for org_unit in data["org_units"]["objects"]
             if (out := await get_unengaged_managers(org_unit))
         ]
         if not recursive:
@@ -180,18 +183,20 @@ async def check_manager_engagement(
     logger.debug("Org-units returned from query", response=data)
     managers_to_terminate += [
         out
-        for org_unit in data["org_units"]
+        for org_unit in data["org_units"]["objects"]
         if (out := await get_unengaged_managers(org_unit))
     ]
 
     # Fetch org-units with children
     child_org_units = filter(
-        lambda org_unit: one(org_unit["objects"])["child_count"] > 0,
-        data["org_units"],
+        lambda org_unit: one(org_unit["validities"])["child_count"] > 0,
+        data["org_units"]["objects"],
     )
-    # Pass org_units with children (uuid)to this function recusively
+
     managers_to_terminate += [
-        await check_manager_engagement(gql_client, org_unit["uuid"], root_uuid)  # type: ignore
+        await check_manager_engagement(
+            gql_client, one(org_unit["validities"])["uuid"], root_uuid
+        )  # type: ignore
         for org_unit in child_org_units
     ]
 
@@ -257,7 +262,7 @@ async def get_current_manager(
     """
     variables = {"uuid": str(org_unit_uuid)}
     ou_manager = await query_graphql(gql_client, CURRENT_MANAGER, variables)
-    managers = one(one(ou_manager["org_units"])["objects"])["managers"]
+    managers = one(one(ou_manager["org_units"]["objects"])["validities"])["managers"]
     if managers:
         logger.debug("Manager found", manager=managers, org_unit=str(org_unit_uuid))
         manager = one(managers)
@@ -393,7 +398,7 @@ async def get_manager_level(
         variables = {"uuids": str(org_unit.parent.parent_uuid)}
         data = await gql_client.execute(QUERY_ORG_UNIT_LEVEL, variable_values=variables)
 
-        org_unit_level_uuid = one(one(data["org_units"])["objects"])[
+        org_unit_level_uuid = one(one(data["org_units"]["objects"])["validities"])[
             "org_unit_level_uuid"
         ]
 

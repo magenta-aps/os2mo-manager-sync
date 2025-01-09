@@ -34,16 +34,22 @@ async def test_get_manager_level_facet_and_classes() -> None:
     mock_gql_client = AsyncMock()
     mock_execute = AsyncMock(
         return_value={
-            "facets": [
-                {
-                    "classes": [
-                        {"name": "Niveau 1"},
-                        {"name": "Niveau 2"},
-                        {"name": "Niveau 3"},
-                    ],
-                    "uuid": "35d5d061-5d19-4584-8c5e-796309b87dfb",
-                }
-            ]
+            "facets": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "classes": [
+                                    {"name": "Niveau 1"},
+                                    {"name": "Niveau 2"},
+                                    {"name": "Niveau 3"},
+                                ],
+                                "uuid": "35d5d061-5d19-4584-8c5e-796309b87dfb",
+                            }
+                        ]
+                    }
+                ]
+            }
         }
     )
     mock_gql_client.execute = mock_execute
@@ -133,15 +139,21 @@ async def test_create_missing_manager_levels() -> None:
         side_effect=[
             {"org": {"uuid": str(org_uuid)}},
             {
-                "facets": [
-                    {
-                        "classes": [
-                            {"name": "Niveau 1"},
-                            {"name": "Niveau 2"},
-                        ],
-                        "uuid": str(facet_uuid),
-                    }
-                ]
+                "facets": {
+                    "objects": [
+                        {
+                            "validities": [
+                                {
+                                    "classes": [
+                                        {"name": "Niveau 1"},
+                                        {"name": "Niveau 2"},
+                                    ],
+                                    "uuid": str(facet_uuid),
+                                }
+                            ]
+                        }
+                    ]
+                }
             },
             {"class_create": {"uuid": str(uuid4())}},
             {"class_create": {"uuid": str(uuid4())}},

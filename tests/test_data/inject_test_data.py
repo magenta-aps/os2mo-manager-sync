@@ -230,7 +230,7 @@ def construct_client(client_secret: str) -> GraphQLClient:
         PersistentGraphQLClient.
     """
     gql_client = GraphQLClient(
-        url="http://localhost:5000/graphql/v2",
+        url="http://localhost:5000/graphql/v22",
         client_id="dipex",
         client_secret=client_secret,
         auth_server="http://localhost:5000/auth",

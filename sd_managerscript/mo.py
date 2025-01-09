@@ -4,7 +4,6 @@ from datetime import datetime
 from uuid import UUID
 
 import structlog
-from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 
 from .models import EngagementFrom
@@ -31,17 +30,12 @@ async def get_active_engagements(
     variables = {"uuid": employee_uuid}
     engagements = await query_graphql(gql_client, QUERY_ENGAGEMENTS, variables)
     logger.debug("Engagements fetched.", response=engagements)
-    engagement_from = None
+    latest_from_date = None
 
-    if engagements["engagements"]:
-        latest_engagement = max(
-            engagements["engagements"],
-            key=lambda eng: datetime.fromisoformat(
-                one(eng["objects"])["validity"]["from"]
-            ),
+    if engagements["engagements"]["objects"]:
+        latest_from_date = max(
+            datetime.fromisoformat(validity["validity"]["from"])
+            for eng in engagements["engagements"]["objects"]
+            for validity in eng["validities"]
         )
-
-        # We add "from date" for lateste engagement to compare with other potential managers
-        engagement_from = one(latest_engagement["objects"])["validity"]["from"]
-
-    return EngagementFrom(employee_uuid=employee_uuid, engagement_from=engagement_from)
+    return EngagementFrom(employee_uuid=employee_uuid, engagement_from=latest_from_date)

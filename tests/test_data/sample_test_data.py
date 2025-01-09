@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from collections.abc import Collection
 from collections.abc import Iterable
-from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -283,70 +281,72 @@ org_unit_samples = [
 ]
 
 graphql_payload = {
-    "org_units": [
-        {
-            "objects": [
-                {
-                    "uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
-                    "name": "Administration",
-                    "child_count": 2,
-                    "parent": {
-                        "uuid": "ab1adf81-1c56-46ce-bd81-8cc536212c12",
-                        "name": "Skoler",
-                        "parent_uuid": "1caba8d9-6b9f-506b-b845-9a8c4f5b8a03",
-                        "org_unit_level_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
-                    },
-                    "associations": [
-                        {
-                            "uuid": "36b5be05-7323-418f-bbd4-7be23c9ca150",
-                            "employee_uuid": "4c88d5a3-199f-454b-9349-a24ab218ca54",
-                            "org_unit_uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
-                            "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
-                            "validity": {
-                                "to": None,
-                                "from": "1977-03-02T00:00:00+02:00",
-                            },
-                        }
-                    ],
-                }
-            ]
-        },
-        {
-            "objects": [
-                {
-                    "uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
-                    "name": "Teknisk Support",
-                    "child_count": 0,
-                    "parent": {
-                        "uuid": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
-                        "name": "Skoler",
-                        "parent_uuid": "1caba8d9-6b9f-506b-b845-9a8c4f5b8a03",
-                        "org_unit_level_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
-                    },
-                    "associations": [
-                        {
+    "org_units": {
+        "objects": [
+            {
+                "validities": [
+                    {
+                        "uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
+                        "name": "Administration",
+                        "child_count": 2,
+                        "parent": {
                             "uuid": "ab1adf81-1c56-46ce-bd81-8cc536212c12",
-                            "employee_uuid": "8315443f-a918-4eea-9605-150472418101",
-                            "org_unit_uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
-                            "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
-                            "validity": {
-                                "to": None,
-                                "from": "2022-08-01T00:00:00+02:00",
-                            },
-                        }
-                    ],
-                }
-            ]
-        },
-    ]
+                            "name": "Skoler",
+                            "parent_uuid": "1caba8d9-6b9f-506b-b845-9a8c4f5b8a03",
+                            "org_unit_level_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
+                        },
+                        "associations": [
+                            {
+                                "uuid": "36b5be05-7323-418f-bbd4-7be23c9ca150",
+                                "employee_uuid": "4c88d5a3-199f-454b-9349-a24ab218ca54",
+                                "org_unit_uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
+                                "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
+                                "validity": {
+                                    "from": "1977-03-02T00:00:00+02:00",
+                                    "to": None,
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+            {
+                "validities": [
+                    {
+                        "uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
+                        "name": "Teknisk Support",
+                        "child_count": 0,
+                        "parent": {
+                            "uuid": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
+                            "name": "Skoler",
+                            "parent_uuid": "1caba8d9-6b9f-506b-b845-9a8c4f5b8a03",
+                            "org_unit_level_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
+                        },
+                        "associations": [
+                            {
+                                "uuid": "ab1adf81-1c56-46ce-bd81-8cc536212c12",
+                                "employee_uuid": "8315443f-a918-4eea-9605-150472418101",
+                                "org_unit_uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
+                                "association_type_uuid": "2665d8e0-435b-5bb6-a550-f275692984ef",
+                                "validity": {
+                                    "from": "2022-08-01T00:00:00+02:00",
+                                    "to": None,
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+        ]
+    }
 }
 
 unengaged_managers_sample = [
     (  # Test with two different engagements (can it match by org_unit_uuid?)
         {
-            "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-            "objects": [
+            "validities": [
                 {
+                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
                     "child_count": 2,
                     "managers": [
                         {
@@ -355,21 +355,21 @@ unengaged_managers_sample = [
                                 {
                                     "engagements": [
                                         {
-                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
                                             "validity": {
                                                 "from": "2019-02-20T00:00:00+01:00",
                                                 "to": None,
                                             },
                                         },
                                         {
-                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                                            "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
                                             "validity": {
                                                 "from": "2019-02-20T00:00:00+01:00",
                                                 "to": "2025-02-20T00:00:00+01:00",
                                             },
                                         },
                                         {
-                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
+                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa 5016
                                             "validity": {
                                                 "from": "2022-11-20T00:00:00+01:00",
                                                 "to": None,
@@ -387,9 +387,9 @@ unengaged_managers_sample = [
     ),
     (  # Test no engagements
         {
-            "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
-            "objects": [
+            "validities": [
                 {
+                    "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
                     "child_count": 0,
                     "managers": [
                         {
@@ -404,9 +404,9 @@ unengaged_managers_sample = [
     ),
     (  # Test to-date before today (no active engagement)
         {
-            "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-            "objects": [
+            "validities": [
                 {
+                    "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
                     "child_count": 0,
                     "managers": [
                         {
@@ -415,7 +415,7 @@ unengaged_managers_sample = [
                                 {
                                     "engagements": [
                                         {
-                                            "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+                                            "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa 5016
                                             "validity": {
                                                 "from": "2021-02-09T00:00:00+01:00",
                                                 "to": "2022-07-26T00:00:00+02:00",
@@ -433,9 +433,9 @@ unengaged_managers_sample = [
     ),
     (  # Test NO managers
         {
-            "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
-            "objects": [
+            "validities": [
                 {
+                    "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
                     "child_count": 0,
                     "managers": [],
                 }
@@ -447,160 +447,164 @@ unengaged_managers_sample = [
 
 engagement_samples = [
     {
-        "org_units": [
-            {
-                "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                "objects": [
-                    {
-                        "child_count": 2,
-                        "managers": [
-                            {
-                                "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
-                                "employee": [
-                                    {
-                                        "engagements": [
-                                            {
-                                                "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa: E501
-                                                "validity": {
-                                                    "from": "2019-02-20T00:00:00+01:00",
-                                                    "to": None,
+        "org_units": {
+            "objects": [
+                {
+                    "validities": [
+                        {
+                            "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                            "child_count": 2,
+                            "managers": [
+                                {
+                                    "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                                    "employee": [
+                                        {
+                                            "engagements": [
+                                                {
+                                                    "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "2019-02-20T00:00:00+01:00",
+                                                        "to": None,
+                                                    },
                                                 },
-                                            },
-                                            {
-                                                "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa: E501
-                                                "validity": {
-                                                    "from": "2022-11-20T00:00:00+01:00",
-                                                    "to": None,
+                                                {
+                                                    "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "2022-11-20T00:00:00+01:00",
+                                                        "to": None,
+                                                    },
                                                 },
-                                            },
-                                        ]
-                                    }
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            },
-            {
-                "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [
-                            {
-                                "uuid": "a9894c2b-8eaa-4487-97c9-9644fb22f93e",
-                                "employee": [
-                                    {
-                                        "engagements": [
-                                            {
-                                                "org_unit_uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa: E501
-                                                "validity": {
-                                                    "from": "1979-04-21T00:00:00+01:00",
-                                                    "to": None,
-                                                },
-                                            }
-                                        ]
-                                    }
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            },
-            {
-                "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [
-                            {
-                                "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
-                                "employee": [{"engagements": []}],
-                            }
-                        ],
-                    }
-                ],
-            },
-            {
-                "uuid": "e054559b-bc15-4203-bced-44375aed1555",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [
-                            {
-                                "uuid": "f000416d-193d-45da-a405-bf95fe4f65d1",
-                                "employee": [
-                                    {
-                                        "engagements": [
-                                            {
-                                                "org_unit_uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",  # noqa: E501
-                                                "validity": {
-                                                    "from": "1987-12-05T00:00:00+01:00",
-                                                    "to": None,
-                                                },
-                                            }
-                                        ]
-                                    }
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            },
-            {
-                "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [
-                            {
-                                "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
-                                "employee": [
-                                    {
-                                        "engagements": [
-                                            {
-                                                "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa: E501
-                                                "validity": {
-                                                    "from": "2021-02-09T00:00:00+01:00",
-                                                    "to": "2022-07-26T00:00:00+02:00",
-                                                },
-                                            }
-                                        ]
-                                    }
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            },
-        ]
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "validities": [
+                        {
+                            "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",
+                            "child_count": 0,
+                            "managers": [
+                                {
+                                    "uuid": "a9894c2b-8eaa-4487-97c9-9644fb22f93e",
+                                    "employee": [
+                                        {
+                                            "engagements": [
+                                                {
+                                                    "org_unit_uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "1979-04-21T00:00:00+01:00",
+                                                        "to": None,
+                                                    },
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "validities": [
+                        {
+                            "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
+                            "child_count": 0,
+                            "managers": [
+                                {
+                                    "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
+                                    "employee": [{"engagements": []}],
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "validities": [
+                        {
+                            "uuid": "e054559b-bc15-4203-bced-44375aed1555",
+                            "child_count": 0,
+                            "managers": [
+                                {
+                                    "uuid": "f000416d-193d-45da-a405-bf95fe4f65d1",
+                                    "employee": [
+                                        {
+                                            "engagements": [
+                                                {
+                                                    "org_unit_uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "1987-12-05T00:00:00+01:00",
+                                                        "to": None,
+                                                    },
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "validities": [
+                        {
+                            "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
+                            "child_count": 0,
+                            "managers": [
+                                {
+                                    "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
+                                    "employee": [
+                                        {
+                                            "engagements": [
+                                                {
+                                                    "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "2021-02-09T00:00:00+01:00",
+                                                        "to": "2022-07-26T00:00:00+02:00",
+                                                    },
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ],
+        },
     },
     {
-        "org_units": [
-            {
-                "uuid": "0c655440-867d-561e-8c28-2aa0ac8d1e20",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [
-                            {
-                                "uuid": "d0d0ab19-f69d-425e-a089-76610e8329dc",
-                                "employee": [{"engagements": []}],
-                            }
-                        ],
-                    }
-                ],
-            },
-            {
-                "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
-                "objects": [
-                    {
-                        "child_count": 0,
-                        "managers": [],
-                    }
-                ],
-            },
-        ]
+        "org_units": {
+            "objects": [
+                {
+                    "validities": [
+                        {
+                            "uuid": "0c655440-867d-561e-8c28-2aa0ac8d1e20",
+                            "child_count": 0,
+                            "managers": [
+                                {
+                                    "uuid": "d0d0ab19-f69d-425e-a089-76610e8329dc",
+                                    "employee": [{"engagements": []}],
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "validities": [
+                        {
+                            "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
+                            "child_count": 0,
+                            "managers": [],
+                        }
+                    ],
+                },
+            ]
+        }
     },
 ]
 
@@ -608,9 +612,9 @@ expected_managers_list = [
     None,
     None,
     UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
-    None,
     UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
     UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
+    UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
     None,
 ]
 
@@ -740,18 +744,20 @@ data_get_active_engagements = [
     (  # Test "normal" case
         "0b5936f2-328d-448e-bfb9-d655e6d3d849",
         {
-            "engagements": [
-                {
-                    "objects": [
-                        {
-                            "validity": {
-                                "from": "1982-12-31T00:00:00+01:00",
-                                "to": None,
+            "engagements": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "validity": {
+                                    "from": "1982-12-31T00:00:00+01:00",
+                                    "to": None,
+                                }
                             }
-                        }
-                    ]
-                }
-            ]
+                        ]
+                    }
+                ]
+            }
         },
         {
             "employee_uuid": "0b5936f2-328d-448e-bfb9-d655e6d3d849",
@@ -761,18 +767,20 @@ data_get_active_engagements = [
     (  # Test Engagement with from date in future
         "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
         {
-            "engagements": [
-                {
-                    "objects": [
-                        {
-                            "validity": {
-                                "from": "2050-12-31T00:00:00+01:00",
-                                "to": None,
+            "engagements": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "validity": {
+                                    "from": "2050-12-31T00:00:00+01:00",
+                                    "to": None,
+                                }
                             }
-                        }
-                    ]
-                }
-            ]
+                        ]
+                    }
+                ]
+            }
         },
         {
             "employee_uuid": "0790ca9c-f3ae-4e4b-b936-03b8aedf5314",
@@ -782,28 +790,26 @@ data_get_active_engagements = [
     (  # Test with multiple engagements
         "05d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
         {
-            "engagements": [
-                {
-                    "objects": [
-                        {
-                            "validity": {
-                                "from": "1982-12-31T00:00:00+01:00",
-                                "to": None,
-                            }
-                        }
-                    ]
-                },
-                {
-                    "objects": [
-                        {
-                            "validity": {
-                                "from": "2022-09-30T00:00:00+01:00",
-                                "to": None,
-                            }
-                        }
-                    ]
-                },
-            ]
+            "engagements": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "validity": {
+                                    "from": "1982-12-31T00:00:00+01:00",
+                                    "to": None,
+                                }
+                            },
+                            {
+                                "validity": {
+                                    "from": "2022-09-30T00:00:00+01:00",
+                                    "to": None,
+                                }
+                            },
+                        ]
+                    }
+                ]
+            },
         },
         {
             "employee_uuid": "05d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
@@ -812,7 +818,7 @@ data_get_active_engagements = [
     ),
     (  # Test with no engagements
         "07d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
-        {"engagements": []},
+        {"engagements": {"objects": []}},
         {
             "employee_uuid": "07d2415b-a9e7-4b8a-bdd4-0d5ea74a457e",
             "engagement_from": None,
@@ -1427,13 +1433,14 @@ def get_create_update_manager_led_adm_data() -> (
 
 def get_manager_engagement_data() -> (
     tuple[
-        list[dict[str, list[dict[str, Sequence[Collection[str]]]]]], list[UUID | None]
+        list[dict[str, dict[str, list[dict[str, list[dict[str, object]]]]]]],
+        list[UUID | None],
     ]
 ):
     return engagement_samples, expected_managers_list
 
 
 def get_unengaged_managers_data() -> (
-    list[tuple[dict[str, Sequence[Collection[str]]], UUID | None]]
+    list[tuple[dict[str, list[dict[str, object]]], UUID | None]]
 ):
     return unengaged_managers_sample

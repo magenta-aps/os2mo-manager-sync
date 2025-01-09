@@ -55,12 +55,14 @@ from tests.test_data.sample_test_data import get_update_managers_data
 QUERY_ORG_UNITS = gql(
     """
     query ($uuid: [UUID!]!){
-        org_units (parents: $uuid){
+        org_units (filter: { parent: {uuids: $uuid} }){
             objects {
-                uuid
-                name
-                parent_uuid
-                child_count
+                validities {
+                    uuid
+                    name
+                    parent_uuid
+                    child_count
+                }
             }
         }
     }
@@ -100,51 +102,55 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
 
     mock_execute = AsyncMock(
         return_value={
-            "org_units": [
-                {
-                    "objects": [
-                        {
-                            "uuid": str(uuid4()),
-                            "name": "some sub unit with children",
-                            "child_count": 5,
-                            "associations": [],
-                            "parent": {
-                                "uuid": parent_uuid,
-                                "name": "some unit",
-                                "parent_uuid": org_uuid,
-                                "org_unit_level_uuid": str(uuid4()),
-                            },
-                        }
-                    ]
-                },
-                {
-                    "objects": [
-                        {
-                            "uuid": str(_leder_org_unit_uuid),
-                            "name": "the _leder sub unit_leder",
-                            "child_count": 0,
-                            "associations": [
-                                {
-                                    "uuid": str(association_uuid),
-                                    "org_unit_uuid": str(_leder_org_unit_uuid),
-                                    "employee_uuid": str(employee_uuid),
-                                    "association_type_uuid": str(association_type_uuid),
-                                    "validity": {
-                                        "from": "2006-01-17T00:00:00",
-                                        "to": None,
-                                    },
-                                }
-                            ],
-                            "parent": {
-                                "uuid": str(parent_uuid),
-                                "name": "some unit",
-                                "parent_uuid": str(org_uuid),
-                                "org_unit_level_uuid": str(org_unit_level_uuid),
-                            },
-                        }
-                    ]
-                },
-            ]
+            "org_units": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "uuid": str(uuid4()),
+                                "name": "some sub unit with children",
+                                "child_count": 5,
+                                "associations": [],
+                                "parent": {
+                                    "uuid": parent_uuid,
+                                    "name": "some unit",
+                                    "parent_uuid": org_uuid,
+                                    "org_unit_level_uuid": str(uuid4()),
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        "validities": [
+                            {
+                                "uuid": str(_leder_org_unit_uuid),
+                                "name": "the _leder sub unit_leder",
+                                "child_count": 0,
+                                "associations": [
+                                    {
+                                        "uuid": str(association_uuid),
+                                        "org_unit_uuid": str(_leder_org_unit_uuid),
+                                        "employee_uuid": str(employee_uuid),
+                                        "association_type_uuid": str(
+                                            association_type_uuid
+                                        ),
+                                        "validity": {
+                                            "from": "2006-01-17T00:00:00",
+                                            "to": None,
+                                        },
+                                    }
+                                ],
+                                "parent": {
+                                    "uuid": str(parent_uuid),
+                                    "name": "some unit",
+                                    "parent_uuid": str(org_uuid),
+                                    "org_unit_level_uuid": str(org_unit_level_uuid),
+                                },
+                            }
+                        ]
+                    },
+                ]
+            },
         }
     )
     mock_gql_client = AsyncMock()
@@ -210,9 +216,13 @@ async def test_check_manager_engagement(
     mock_get_unengaged_managers.side_effect = managers
 
     managers_list = await check_manager_engagement(gql_client, org_unit_uuid, root_uuid)
-    expected = [x for x in managers if x is not None]
 
-    assert managers_list == expected
+    assert managers_list == [
+        UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+        UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+        UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
+        UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
+    ]
 
 
 @freeze_time("2023-01-01")
@@ -401,27 +411,29 @@ async def test_get_current_manager_uuid(
     from_ = datetime.now()
 
     return_dict: dict = {
-        "org_units": [
-            {
-                "objects": [
-                    {
-                        "managers": [
-                            {
-                                "uuid": str(manager_uuid),
-                                "employee_uuid": str(employee_uuid),
-                                "manager_level_uuid": str(manager_level_uuid),
-                                "manager_type_uuid": str(manager_type_uuid),
-                                "org_unit_uuid": str(ou_uuid),
-                                "validity": {
-                                    "from": from_.isoformat(),
-                                    "to": None,
-                                },
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+        "org_units": {
+            "objects": [
+                {
+                    "validities": [
+                        {
+                            "managers": [
+                                {
+                                    "uuid": str(manager_uuid),
+                                    "employee_uuid": str(employee_uuid),
+                                    "manager_level_uuid": str(manager_level_uuid),
+                                    "manager_type_uuid": str(manager_type_uuid),
+                                    "org_unit_uuid": str(ou_uuid),
+                                    "validity": {
+                                        "from": from_.isoformat(),
+                                        "to": None,
+                                    },
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
     }
 
     mock_query_graphql.return_value = return_dict
@@ -446,7 +458,7 @@ async def test_get_current_manager_none(
 
     ou_uuid = "27935dbb-c173-4116-a4b5-75022315749d"
 
-    return_dict: dict = {"org_units": [{"objects": [{"managers": []}]}]}
+    return_dict: dict = {"org_units": {"objects": [{"validities": [{"managers": []}]}]}}
 
     mock_query_graphql.return_value = return_dict
     returned_uuid = await get_current_manager(gql_client, UUID(ou_uuid))
@@ -634,13 +646,17 @@ async def test_get_manager_level_led_adm() -> None:
     mock_gql_client = AsyncMock()
     mock_execute = AsyncMock(
         return_value={
-            "org_units": [
-                {
-                    "objects": [
-                        {"org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"}
-                    ]
-                }
-            ]
+            "org_units": {
+                "objects": [
+                    {
+                        "validities": [
+                            {
+                                "org_unit_level_uuid": "891603db-cc28-6ed2-6d48-25e14d3f142f"
+                            }
+                        ]
+                    }
+                ]
+            }
         }
     )
     mock_gql_client.execute = mock_execute

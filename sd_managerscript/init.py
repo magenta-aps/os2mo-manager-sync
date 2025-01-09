@@ -13,12 +13,16 @@ from .queries import QUERY_ORG
 QUERY_MANAGER_CLASSES = gql(
     """
     query Facet {
-      facets(user_keys: "manager_level") {
-        classes {
-          name
+        facets(filter: { user_keys: "manager_level" }) {
+            objects {
+                validities {
+                    classes {
+                       name
+                    }
+                    uuid
+                }
+            }
         }
-        uuid
-      }
     }
     """
 )
@@ -77,8 +81,8 @@ async def get_manager_level_facet_and_classes(
     """
 
     r = await gql_client.execute(QUERY_MANAGER_CLASSES)
-
-    facet = one(r["facets"])
+    facets = r.get("facets", {})
+    facet = one(one(facets["objects"])["validities"])
     classes = facet.get("classes", [])
     existing_class_names = list(map(lambda _class: _class["name"], classes))  # type: ignore
 

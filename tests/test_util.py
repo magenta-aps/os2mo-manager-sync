@@ -10,7 +10,17 @@ from sd_managerscript.util import query_org_unit
 from tests.test_data.sample_test_data import get_org_unit_models_sample  # type: ignore
 
 QUERY_ROOT_ORG_UNIT = gql(
-    """query ($uuids: [UUID!]!) {org_units (uuids: $uuids) {uuid}}"""
+    """
+    query ($uuids: [UUID!]!) {
+        org_units (filter: {uuids: $uuids}) {
+            objects {
+                validities {
+                    uuid
+                }
+            }
+        }
+    }
+    """
 )
 
 MUTATOR_TERMINATE_MANAGER_BY_UUID = gql(

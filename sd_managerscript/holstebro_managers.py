@@ -17,6 +17,7 @@ from .filters import filter_manager_org_units
 from .models import Manager
 from .models import ManagerLevel
 from .models import ManagerType
+from .models import OrgUnitManager
 from .models import OrgUnitManagers
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
@@ -33,7 +34,7 @@ from .util import query_org_unit
 logger = structlog.get_logger()
 
 
-async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
+async def get_unengaged_managers(query_dict: dict[str, Any]) -> OrgUnitManager | None:
     """
     Check if manager has an active engagement in this org-unit
     if not, return manager_uuid.
@@ -113,7 +114,11 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
                     ):
                         return None
 
-        return UUID(manager_uuid)
+        return OrgUnitManager(
+            org_unit_uuid=UUID(one(query_dict["validities"])["uuid"]),
+            manager_uuid=UUID(manager_uuid),
+        )
+
     return None
 
 
@@ -122,7 +127,7 @@ async def check_manager_engagement(
     org_unit_uuid: UUID,
     root_uuid: UUID,
     recursive: bool = True,
-) -> list[UUID]:
+) -> list[OrgUnitManager]:
     """
     Recursive function, traverse through all org_units and checks if manager has engagement
     If not: Managers uuid is added to managers_to_terminate for later termination
@@ -458,8 +463,10 @@ async def update_mo_managers(
     logger.debug("Managers to terminate", managers_to_terminate=managers_to_terminate)
 
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
-    for manager_uuid in managers_to_terminate:
-        await terminate_manager(gql_client, manager_uuid, dry_run=dry_run)
+    for org_unit_manager in managers_to_terminate:
+        await terminate_manager(
+            gql_client, org_unit_manager.manager_uuid, dry_run=dry_run
+        )
 
     logger.info("Getting manager org units (units ending in _leder)...")
     manager_org_units = await get_manager_org_units(
@@ -474,4 +481,5 @@ async def update_mo_managers(
     for org_unit in manager_org_units:
         await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
+    logger.debug("hurra")
     logger.info("Updating managers complete!")

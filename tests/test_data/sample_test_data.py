@@ -13,6 +13,7 @@ from sd_managerscript.models import Association
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import ManagerType
+from sd_managerscript.models import OrgUnitManager
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 
@@ -400,7 +401,10 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+        OrgUnitManager(
+            org_unit_uuid=UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+            manager_uuid=UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+        ),
     ),
     (  # Test to-date before today (no active engagement)
         {
@@ -429,7 +433,10 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+        OrgUnitManager(
+            org_unit_uuid=UUID("f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd"),
+            manager_uuid=UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+        ),
     ),
     (  # Test NO managers
         {
@@ -1441,6 +1448,6 @@ def get_manager_engagement_data() -> (
 
 
 def get_unengaged_managers_data() -> (
-    list[tuple[dict[str, list[dict[str, object]]], UUID | None]]
+    list[tuple[dict[str, list[dict[str, object]]], OrgUnitManager | None]]
 ):
     return unengaged_managers_sample

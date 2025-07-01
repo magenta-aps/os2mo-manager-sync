@@ -68,6 +68,11 @@ class Parent(BaseModel):
     org_unit_level_uuid: UUID = Field(description="UUID of the parent org-unit level.")
 
 
+class OrgUnitManager(BaseModel):
+    org_unit_uuid: UUID
+    manager_uuid: UUID
+
+
 class OrgUnitManagers(BaseModel):
     """
     Organisation unit with managers

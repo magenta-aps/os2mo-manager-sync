@@ -23,7 +23,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("08eaf849-e9f9-53e0-b6b9-3cd45763ecbb"),
             name="Viuf skole",
-            child_count=1,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -48,7 +48,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("1e28b010-67a9-5e0b-b6b5-432a00e9be35"),
             name="Tjerre skole",
-            child_count=2,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -60,8 +60,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
             name="Sønder Stenderup skole",
-            # TODO: this child count must be a bug...
-            child_count=-2,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -88,7 +87,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("1c690f27-35c5-5c02-975a-930e6b524805"),
             name="Haderslev skole",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -100,7 +99,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("1caba8d9-6b9f-506b-b845-9a8c4f5b8a03"),
             name="Jordrup børnehus",
-            child_count=1,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -127,7 +126,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
             name="Almind skole_leder ",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -152,7 +151,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("60370b40-a143-40c5-aaa1-638b3b74d119"),
             name="Social Indsats_LEDER",
-            child_count=3,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -179,7 +178,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
             name="Budget og Planlægning",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -206,7 +205,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("25e39a21-caef-4e96-ac90-7cc27173082e"),
             name="IT-Support",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -231,7 +230,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
             name="Social og sundhed_leder",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -256,7 +255,7 @@ org_unit_samples = [
         OrgUnitManagers(
             uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
             name="Ø_Social og sundhed 666_leder",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -289,7 +288,7 @@ graphql_payload = {
                     {
                         "uuid": "7133da92-e624-56c9-8e23-bac319a537e1",
                         "name": "Administration",
-                        "child_count": 2,
+                        "has_children": True,
                         "parent": {
                             "uuid": "ab1adf81-1c56-46ce-bd81-8cc536212c12",
                             "name": "Skoler",
@@ -316,7 +315,7 @@ graphql_payload = {
                     {
                         "uuid": "100b9d19-3190-490f-94f9-759b6b24172a",
                         "name": "Teknisk Support",
-                        "child_count": 0,
+                        "has_children": False,
                         "parent": {
                             "uuid": "9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c",
                             "name": "Skoler",
@@ -348,7 +347,7 @@ unengaged_managers_sample = [
             "validities": [
                 {
                     "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                    "child_count": 2,
+                    "has_children": True,
                     "managers": [
                         {
                             "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
@@ -391,7 +390,7 @@ unengaged_managers_sample = [
             "validities": [
                 {
                     "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
-                    "child_count": 0,
+                    "has_children": False,
                     "managers": [
                         {
                             "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
@@ -411,7 +410,7 @@ unengaged_managers_sample = [
             "validities": [
                 {
                     "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-                    "child_count": 0,
+                    "has_children": 0,
                     "managers": [
                         {
                             "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
@@ -443,7 +442,7 @@ unengaged_managers_sample = [
             "validities": [
                 {
                     "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
-                    "child_count": 0,
+                    "has_children": False,
                     "managers": [],
                 }
             ],
@@ -460,7 +459,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                            "child_count": 2,
+                            "has_children": True,
                             "managers": [
                                 {
                                     "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
@@ -493,7 +492,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [
                                 {
                                     "uuid": "a9894c2b-8eaa-4487-97c9-9644fb22f93e",
@@ -519,7 +518,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [
                                 {
                                     "uuid": "37dbbd86-1e4f-4292-a9a7-f92be4b7371e",
@@ -533,7 +532,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "e054559b-bc15-4203-bced-44375aed1555",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [
                                 {
                                     "uuid": "f000416d-193d-45da-a405-bf95fe4f65d1",
@@ -559,7 +558,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [
                                 {
                                     "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
@@ -591,7 +590,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "0c655440-867d-561e-8c28-2aa0ac8d1e20",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [
                                 {
                                     "uuid": "d0d0ab19-f69d-425e-a089-76610e8329dc",
@@ -605,7 +604,7 @@ engagement_samples = [
                     "validities": [
                         {
                             "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
-                            "child_count": 0,
+                            "has_children": False,
                             "managers": [],
                         }
                     ],
@@ -629,7 +628,7 @@ org_unit_models = [
     OrgUnitManagers(
         uuid=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
         name="Administration",
-        child_count=2,
+        has_children=True,
         parent=Parent(
             uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
             name="Skoler",
@@ -652,7 +651,7 @@ org_unit_models = [
     OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="Teknisk Support",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler",
@@ -678,7 +677,7 @@ expected_managers = [
     OrgUnitManagers(
         uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
         name="Almind skole_leder ",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler",
@@ -701,7 +700,7 @@ expected_managers = [
     OrgUnitManagers(
         uuid=UUID("60370b40-a143-40c5-aaa1-638b3b74d119"),
         name="Social Indsats_LEDER",
-        child_count=3,
+        has_children=True,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler",
@@ -724,7 +723,7 @@ expected_managers = [
     OrgUnitManagers(
         uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
         name="Social og sundhed_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler",
@@ -838,7 +837,7 @@ filter_managers_data = [
         OrgUnitManagers(
             uuid=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
             name="Administration",
-            child_count=2,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Some Unit",
@@ -881,7 +880,7 @@ filter_managers_data = [
         OrgUnitManagers(
             uuid=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
             name="Administration",
-            child_count=2,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Some Unit",
@@ -906,7 +905,7 @@ filter_managers_data = [
         OrgUnitManagers(
             uuid=UUID("6e629aef-4e5a-537a-8320-5e05015685f6"),
             name="Teknisk Support",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("316358a3-6007-5802-af99-656a19999f0c"),
                 name="Skoler",
@@ -935,7 +934,7 @@ filter_managers_data = [
         OrgUnitManagers(
             uuid=UUID("6e629aef-4e5a-537a-8320-5e05015685f6"),
             name="Teknisk Support",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("316358a3-6007-5802-af99-656a19999f0c"),
                 name="Skoler",
@@ -963,7 +962,7 @@ filter_managers_data_fail = (
     OrgUnitManagers(
         uuid=UUID("7133da92-e624-56c9-8e23-bac319a537e1"),
         name="Administration",
-        child_count=2,
+        has_children=True,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Some Unit",
@@ -1010,7 +1009,7 @@ filter_managers_terminate = [
         OrgUnitManagers(
             uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
             name="Social og sundhed_leder",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -1044,7 +1043,7 @@ filter_managers_terminate = [
         OrgUnitManagers(
             uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
             name="Social og sundhed_leder",
-            child_count=0,
+            has_children=False,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -1208,7 +1207,7 @@ create_manager_sample = [
         OrgUnitManagers(
             uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             name="Social Indsats_LEDER",
-            child_count=3,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -1254,7 +1253,7 @@ create_manager_sample = [
         OrgUnitManagers(
             uuid=UUID("4c88d5a3-199f-454b-9349-a24ab218ca54"),
             name="Social Indsats_LEDER",
-            child_count=3,
+            has_children=True,
             parent=Parent(
                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
                 name="Skoler",
@@ -1303,7 +1302,7 @@ get_create_update_manager_sample = (
     OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="Social og sundhed_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler",
@@ -1348,7 +1347,7 @@ get_create_update_manager_led_adm_sample = (
     OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="Social og sundhed_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="Skoler_led-adm",

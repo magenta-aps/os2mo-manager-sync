@@ -28,7 +28,7 @@ QUERY_ORG_UNITS = gql(
                     validities {
                         uuid
                         name
-                        child_count
+                        has_children
                         associations {
                             uuid
                             org_unit_uuid
@@ -160,7 +160,7 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
                 objects {
                     validities {
                         uuid
-                        child_count
+                        has_children
                         managers {
                             uuid
                             employee {
@@ -187,7 +187,7 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
                 objects {
                     validities {
                         uuid
-                        child_count
+                        has_children
                         managers{
                             uuid
                             employee {

@@ -61,7 +61,7 @@ QUERY_ORG_UNITS = gql(
                     uuid
                     name
                     parent_uuid
-                    child_count
+                    has_children
                 }
             }
         }
@@ -109,7 +109,7 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
                             {
                                 "uuid": str(uuid4()),
                                 "name": "some sub unit with children",
-                                "child_count": 5,
+                                "has_children": True,
                                 "associations": [],
                                 "parent": {
                                     "uuid": parent_uuid,
@@ -125,7 +125,7 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
                             {
                                 "uuid": str(_leder_org_unit_uuid),
                                 "name": "the _leder sub unit_leder",
-                                "child_count": 0,
+                                "has_children": False,
                                 "associations": [
                                     {
                                         "uuid": str(association_uuid),
@@ -164,7 +164,7 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
         OrgUnitManagers(
             uuid=_leder_org_unit_uuid,
             name="the _leder sub unit_leder",
-            child_count=0,
+            has_children=False,
             associations=[
                 Association(
                     uuid=association_uuid,
@@ -605,7 +605,7 @@ async def test_get_manager_level(gql_client: MagicMock) -> None:
     org_unit_manager = OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="SomeUnit_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="SomeUnit",
@@ -634,7 +634,7 @@ async def test_get_manager_level_led_adm() -> None:
     org_unit_manager = OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="SomeUnit_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="SomeUnit_led-adm",

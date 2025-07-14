@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import asyncio
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -7,7 +8,6 @@ from uuid import UUID
 
 import structlog
 from fastapi.encoders import jsonable_encoder
-from more_itertools import collapse
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from ramodels.mo._shared import Validity  # type: ignore
@@ -54,7 +54,7 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> OrgUnitManager |
             {
                 "validities: [{
                     "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                    "child_count": 2,
+                    "has_children": True,
                     "managers": [
                         {
                             "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
@@ -172,11 +172,13 @@ async def check_manager_engagement(
             gql_client, QUERY_ROOT_MANAGER_ENGAGEMENTS, variables
         )
         # Check if manager of root org-unit has active engagement
-        managers_to_terminate = [
-            out
+        root_tasks = [
+            get_unengaged_managers(org_unit)
             for org_unit in data["org_units"]["objects"]
-            if (out := await get_unengaged_managers(org_unit))
         ]
+        root_results = await asyncio.gather(*root_tasks)
+        managers_to_terminate.extend([res for res in root_results if res is not None])
+
         if not recursive:
             return managers_to_terminate
 
@@ -186,27 +188,34 @@ async def check_manager_engagement(
     # For each child org_unit in data, check the assigned manager has active engagement
     # or else return managers uuid to terminate
     logger.debug("Org-units returned from query", response=data)
-    managers_to_terminate += [
-        out
+    # Concurrently check managers for engagement
+    check_tasks = [
+        get_unengaged_managers(org_unit) for org_unit in data["org_units"]["objects"]
+    ]
+    check_results = await asyncio.gather(*check_tasks)
+    managers_to_terminate.extend([res for res in check_results if res is not None])
+
+    # Recursively check child org-units with children
+    child_org_units = [
+        org_unit
         for org_unit in data["org_units"]["objects"]
-        if (out := await get_unengaged_managers(org_unit))
+        if one(org_unit["validities"])["has_children"]
     ]
 
-    # Fetch org-units with children
-    child_org_units = filter(
-        lambda org_unit: one(org_unit["validities"])["child_count"] > 0,
-        data["org_units"]["objects"],
-    )
-
-    managers_to_terminate += [
-        await check_manager_engagement(
-            gql_client, one(org_unit["validities"])["uuid"], root_uuid
-        )  # type: ignore
+    recursive_tasks = [
+        check_manager_engagement(
+            gql_client,
+            one(org_unit["validities"])["uuid"],
+            root_uuid,
+        )
         for org_unit in child_org_units
     ]
+    child_results = await asyncio.gather(*recursive_tasks)
 
-    managers = list(collapse(managers_to_terminate, base_type=UUID))
-    return managers
+    for sublist in child_results:
+        managers_to_terminate.extend(sublist)
+
+    return managers_to_terminate
 
 
 async def get_manager_org_units(
@@ -225,32 +234,33 @@ async def get_manager_org_units(
 
     """
 
+    # TODO: This whole recursive thing, could possibly be simplyfied by just
+    # fetching all units (potentially with pagination).
+    # It seems redundant, compared to the state GraphQL is in now.
     variables = {"uuid": str(org_unit_uuid)}
     data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
     logger.debug("Org-units returned from query", response=data)
-    child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
-    # Selecting org_unit with names ending in "_leder" but NOT starting
-    # with "Ø_"
-    # TODO: we should probably check that there is only one '_leder' in each
-    #  org unit level in the OU-tree
-    manager_list = list(
-        filter(
-            lambda ou: (jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder")
-            and (jsonable_encoder(ou)["name"].strip()[:2] != "Ø_"),
-            data,
-        )
-    )
-    logger.debug("Manager list up until now...", org_units=manager_list)
+    # Select _leder units that are not prefixed with 'Ø_'
+    leder_units = [
+        ou
+        for ou in data
+        if ou.name.lower().strip().endswith("_leder")
+        and not ou.name.strip().startswith("Ø_")
+    ]
+
     if recursive:
-        manager_list += [
-            await get_manager_org_units(  # type: ignore
-                gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
-            )
-            for org_unit in child_org_units
-        ]
-    managers = list(collapse(manager_list, base_type=OrgUnitManagers))
-    return managers
+        child_org_units = [ou for ou in data if ou.has_children]
+        recursive_results = await asyncio.gather(
+            *[
+                get_manager_org_units(gql_client, ou.uuid, recursive=True)
+                for ou in child_org_units
+            ]
+        )
+        for result in recursive_results:
+            leder_units.extend(result)
+
+    return leder_units
 
 
 async def get_current_manager(
@@ -452,7 +462,7 @@ async def update_mo_managers(
     org_unit_uuid: UUID,
     root_uuid: UUID,
     recursive: bool = True,
-    dry_run: bool = False,
+    dry_run: bool = True,
 ) -> None:
     """Main function for selecting and updating managers"""
 

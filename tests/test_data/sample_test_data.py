@@ -383,7 +383,7 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        None,
+        [],
     ),
     (  # Test no engagements
         {
@@ -400,10 +400,12 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        OrgUnitManager(
-            org_unit_uuid=UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
-            manager_uuid=UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
-        ),
+        [
+            OrgUnitManager(
+                org_unit_uuid=UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+                manager_uuid=UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+            )
+        ],
     ),
     (  # Test to-date before today (no active engagement)
         {
@@ -432,10 +434,12 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        OrgUnitManager(
-            org_unit_uuid=UUID("f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd"),
-            manager_uuid=UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
-        ),
+        [
+            OrgUnitManager(
+                org_unit_uuid=UUID("f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd"),
+                manager_uuid=UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+            )
+        ],
     ),
     (  # Test NO managers
         {
@@ -447,7 +451,7 @@ unengaged_managers_sample = [
                 }
             ],
         },
-        None,
+        [],
     ),
 ]
 
@@ -483,7 +487,23 @@ engagement_samples = [
                                             ],
                                         }
                                     ],
-                                }
+                                },
+                                {
+                                    "uuid": "a7d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
+                                    "employee": [
+                                        {
+                                            "engagements": [
+                                                {
+                                                    "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                                    "validity": {
+                                                        "from": "2021-02-09T00:00:00+01:00",
+                                                        "to": "2022-07-26T00:00:00+02:00",
+                                                    },
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
                             ],
                         }
                     ],
@@ -554,32 +574,6 @@ engagement_samples = [
                         }
                     ],
                 },
-                {
-                    "validities": [
-                        {
-                            "uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",
-                            "has_children": False,
-                            "managers": [
-                                {
-                                    "uuid": "a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e",
-                                    "employee": [
-                                        {
-                                            "engagements": [
-                                                {
-                                                    "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa 5016
-                                                    "validity": {
-                                                        "from": "2021-02-09T00:00:00+01:00",
-                                                        "to": "2022-07-26T00:00:00+02:00",
-                                                    },
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                }
-                            ],
-                        }
-                    ],
-                },
             ],
         },
     },
@@ -612,16 +606,6 @@ engagement_samples = [
             ]
         }
     },
-]
-
-expected_managers_list = [
-    None,
-    None,
-    UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
-    UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
-    UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
-    UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
-    None,
 ]
 
 org_unit_models = [
@@ -1437,16 +1421,11 @@ def get_create_update_manager_led_adm_data() -> (
     return get_create_update_manager_led_adm_sample
 
 
-def get_manager_engagement_data() -> (
-    tuple[
-        list[dict[str, dict[str, list[dict[str, list[dict[str, object]]]]]]],
-        list[UUID | None],
-    ]
-):
-    return engagement_samples, expected_managers_list
+def get_manager_engagement_data() -> list[dict]:
+    return engagement_samples
 
 
 def get_unengaged_managers_data() -> (
-    list[tuple[dict[str, list[dict[str, object]]], OrgUnitManager | None]]
-):
+    list
+):  # This is terribly typed, but makes mypy happy for now :awesome:
     return unengaged_managers_sample

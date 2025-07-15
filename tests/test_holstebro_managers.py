@@ -34,6 +34,7 @@ from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import ManagerType
+from sd_managerscript.models import OrgUnitManager
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
@@ -188,20 +189,18 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
     "org_unit_uuid, root_uuid",
     [
         (
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
         ),
         (
-            UUID("b6fd7f0e-b47f-4370-a8d3-8003cbfb3be2"),
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+            UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
         ),
     ],
 )
-@patch("sd_managerscript.holstebro_managers.get_unengaged_managers")
 @patch("sd_managerscript.holstebro_managers.query_graphql")
 async def test_check_manager_engagement(
     mock_query_graphql: AsyncMock,
-    mock_get_unengaged_managers: MagicMock,
     gql_client: MagicMock,
     org_unit_uuid: UUID,
     root_uuid: UUID,
@@ -211,17 +210,28 @@ async def test_check_manager_engagement(
     and if not, will terminate the manager role.
     """
 
-    sample_data, managers = get_manager_engagement_data()
+    sample_data = get_manager_engagement_data()
     mock_query_graphql.side_effect = sample_data
-    mock_get_unengaged_managers.side_effect = managers
 
     managers_list = await check_manager_engagement(gql_client, org_unit_uuid, root_uuid)
 
     assert managers_list == [
-        UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
-        UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
-        UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
-        UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
+        OrgUnitManager(
+            org_unit_uuid=UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
+            manager_uuid=UUID("a7d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+            manager_uuid=UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("e054559b-bc15-4203-bced-44375aed1555"),
+            manager_uuid=UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("0c655440-867d-561e-8c28-2aa0ac8d1e20"),
+            manager_uuid=UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
+        ),
     ]
 
 

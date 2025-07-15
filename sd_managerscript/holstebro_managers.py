@@ -34,92 +34,53 @@ from .util import query_org_unit
 logger = structlog.get_logger()
 
 
-async def get_unengaged_managers(query_dict: dict[str, Any]) -> OrgUnitManager | None:
+def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool:
+    """Return True if engagement is in the org_unit and still active."""
+    if engagement["org_unit_uuid"] != org_unit_uuid:
+        return False
+
+    to_date = engagement["validity"]["to"]
+    if to_date is None:
+        return True  # No end date = still active
+    return datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
+
+
+async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
-    Check if manager has an active engagement in this org-unit
-    if not, return manager_uuid.
-
-    Args:
-        query_dict: dict with info on manager details: employee, engagement to date
-                    See example below, as well as query to generate the dict:
-                        .queries: QUERY_MANAGER_ENGAGEMENTS
-    Returns:
-        UUID (manager uuid) if manager has no active engagement
-        None if manager has an active engagement in this org-unit
-
-    Example of query_dict:
-
-    {
-        "objects": [
-            {
-                "validities: [{
-                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                    "has_children": True,
-                    "managers": [
-                        {
-                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
-                            "employee": [
-                                {
-                                    "engagements": [
-                                        {
-                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
-                                            "validity": {
-                                                "from": "2022-11-20T00:00:00+01:00",
-                                                "to": None,
-                                            },
-                                        },
-                                    ]
-                                }
-                            ],
-                        }
-                    ],
-                }]
-            }
-        ],
-    }
-
-
-
+    Return OrgUnitManager if the manager has no active engagements in the given org-unit.
     """
-    # TODO: Replace nested if tree with filter?
-    # (https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177686)
+    unengaged_managers = []
 
-    # if org-unit has any managers
-    if one(query_dict["validities"])["managers"]:
-        manager_uuid = one(one(query_dict["validities"])["managers"])["uuid"]
+    try:
+        validity = one(query_dict["validities"])
+        org_unit_uuid = validity["uuid"]
+        managers = validity.get("managers", [])
 
-        # if employee has any engagements, check it's still active
-        engagements = one(one(one(query_dict["validities"])["managers"])["employee"])[
-            "engagements"
-        ]
-        # Only get engagements relevant for this org_unit
-        if engagements:
-            relevant_engagements = list(
-                filter(
-                    lambda eng: eng["org_unit_uuid"]
-                    == one(query_dict["validities"])["uuid"],
-                    engagements,
-                )
+        for manager in managers:
+            manager_uuid = manager["uuid"]
+            employee = one(manager.get("employee", []))
+            engagements = employee.get("engagements", [])
+
+            has_active_engagement = any(
+                is_engagement_active(e, org_unit_uuid) for e in engagements
             )
-            if relevant_engagements:
-                to_dates = [
-                    engagement["validity"]["to"] for engagement in relevant_engagements
-                ]
+            if not has_active_engagement:
+                unengaged_managers.append(
+                    OrgUnitManager(
+                        org_unit_uuid=UUID(org_unit_uuid),
+                        manager_uuid=UUID(manager_uuid),
+                    )
+                )
 
-                # Check if at least one of the engagements to_date is after
-                # today or None in which case there is an active engagement
-                for to_date in to_dates:
-                    if not to_date or (
-                        datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
-                    ):
-                        return None
-
-        return OrgUnitManager(
-            org_unit_uuid=UUID(one(query_dict["validities"])["uuid"]),
-            manager_uuid=UUID(manager_uuid),
+    except (KeyError, IndexError, StopIteration, TypeError) as e:
+        logger.error(
+            "Error processing unengaged managers from query_dict: %s. Exception: %s",
+            query_dict,
+            e,
+            exc_info=True,
         )
 
-    return None
+    return unengaged_managers
 
 
 async def check_manager_engagement(
@@ -177,7 +138,9 @@ async def check_manager_engagement(
             for org_unit in data["org_units"]["objects"]
         ]
         root_results = await asyncio.gather(*root_tasks)
-        managers_to_terminate.extend([res for res in root_results if res is not None])
+        for res in root_results:
+            if res:
+                managers_to_terminate.extend(res)
 
         if not recursive:
             return managers_to_terminate
@@ -193,7 +156,9 @@ async def check_manager_engagement(
         get_unengaged_managers(org_unit) for org_unit in data["org_units"]["objects"]
     ]
     check_results = await asyncio.gather(*check_tasks)
-    managers_to_terminate.extend([res for res in check_results if res is not None])
+    for res in check_results:
+        if res:
+            managers_to_terminate.extend(res)
 
     # Recursively check child org-units with children
     child_org_units = [
@@ -314,6 +279,8 @@ async def create_manager_object(
 
     # We need to fetch the first element in associations as there could be
     # more than one association. But they would all refer to the same employee
+    # Not sure that's true ^
+    # TODO: add missing fields
     manager = Manager(
         employee=org_unit.associations[0].employee_uuid,
         org_unit=org_unit.uuid,
@@ -323,7 +290,7 @@ async def create_manager_object(
             from_date=datetime.today().date().isoformat(),
             to_date=None,
         ),
-    )  # type: ignore
+    )
 
     logger.info(f"Manager object created: {manager}")
     return manager
@@ -462,7 +429,7 @@ async def update_mo_managers(
     org_unit_uuid: UUID,
     root_uuid: UUID,
     recursive: bool = True,
-    dry_run: bool = True,
+    dry_run: bool = False,
 ) -> None:
     """Main function for selecting and updating managers"""
 

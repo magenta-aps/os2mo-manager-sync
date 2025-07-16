@@ -25,7 +25,7 @@ services:
       ROOT_UUID: "f06ee470-9f17-566f-acbe-e938112d46d9"
       MANAGER_TYPE_UUID: "83b47e9e-de81-432e-bf0b-4ad95cd18589"
       RESPONSIBILITY_UUID: "82188ee7-a5da-4f3c-bf52-434d9ce57a65"
-      MANAGER_LEVEL_MAPPING: '[{
+      MANAGER_LEVEL_MAPPING: '{
         "84f95e29-48a0-4175-85fd-84a1f596e1a4": "97ab3d21-4b9d-420c-b738-fde6a56ffb45",
         "abbbefb2-85a6-4a5d-ad94-98a363adfee6": "d09ba017-f838-4742-b57e-44c2f5437e38",
         "c553d5fd-0768-4907-9d34-14757c87454c": "f0a18e70-dcd1-4c42-9cb3-f9602fb25a69",
@@ -34,7 +34,7 @@ services:
         "ff23ab25-ba89-432c-a689-e0824f66ee1e": "a8754726-a4b9-1715-6b41-769c6fe703c5",
         "53350314-820e-4bcc-a286-b0c1bb7738e9": "e226821b-4af3-1e91-c53f-ea5c57c6d8d0",
         "418b313a-979f-4a26-807e-ba8dd3114d74": "b352fff5-c6ef-4efa-b9fc-7e738bee6b9f"
-      }]'
+      }'
       MANAGER_LEVEL_CREATE: '[
             {
                 "uuid": "b352fff5-c6ef-4efa-b9fc-7e738bee6b9f",

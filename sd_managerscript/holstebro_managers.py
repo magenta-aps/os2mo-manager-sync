@@ -370,13 +370,12 @@ async def get_manager_level(
     """
 
     # Assign manager level based on "NYx" org_unit_level_uuid
-    # TODO: use Pydantic model instead of dict in the ENV
-    manager_level_dict = one(get_settings().manager_level_mapping)
+    manager_level_dict = get_settings().manager_level_mapping
     org_unit_level_uuid = org_unit.parent.org_unit_level_uuid
 
     # If parent org-unit name is ending with "led-adm"
     # we fetch org_unit_level_uuid from org-unit two levels up
-    if org_unit.parent.name.strip()[-7:] == "led-adm":
+    if org_unit.parent.name.strip().endswith("led-adm"):
         variables = {"uuids": str(org_unit.parent.parent_uuid)}
         data = await gql_client.execute(QUERY_ORG_UNIT_LEVEL, variable_values=variables)
 

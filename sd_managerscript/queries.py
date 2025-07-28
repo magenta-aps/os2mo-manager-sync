@@ -160,6 +160,7 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
                 objects {
                     validities {
                         uuid
+                        name
                         has_children
                         managers {
                             uuid
@@ -172,6 +173,9 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
                                     }
                                 }
                             }
+                        }
+                        children {
+                            name
                         }
                     }
                 }
@@ -187,6 +191,7 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
                 objects {
                     validities {
                         uuid
+                        name
                         has_children
                         managers{
                             uuid
@@ -199,6 +204,9 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
                                     }
                                 }
                             }
+                        }
+                        children {
+                            name
                         }
                     }
                 }

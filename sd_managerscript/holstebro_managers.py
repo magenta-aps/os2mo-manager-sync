@@ -51,6 +51,20 @@ def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool
     return datetime.fromisoformat(to_date) > datetime.now(tz=DEFAULT_TZ)
 
 
+def has_valid_led_adm_child(org_unit: dict) -> bool:
+    """
+    Returns True if any of the children follow the naming pattern:
+    child.name == parent.name + '_led-adm'
+    """
+    parent_name = org_unit.get("name", "").lower().strip()
+    expected_child_name = f"{parent_name}_led-adm"
+    children = org_unit.get("children", [])
+    return any(
+        child.get("name", "").lower().strip() == expected_child_name
+        for child in children
+    )
+
+
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
     Return OrgUnitManager if the manager has no active engagements in the given org-unit.
@@ -58,13 +72,17 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitMana
     unengaged_managers: list[OrgUnitManager] = []
 
     try:
-        validity = one(query_dict["validities"])
-        org_unit_uuid = validity["uuid"]
-    except Exception:
-        logger.error("Invalid query_dict: %s", query_dict, exc_info=True)
+        org_unit = one(query_dict["validities"])
+    except Exception as e:
+        logger.error(f"Invalid query_dict: {query_dict}. Exception: {e}", exc_info=True)
         return unengaged_managers
 
-    for manager in validity.get("managers", []):
+    if has_valid_led_adm_child(org_unit):
+        return unengaged_managers
+
+    org_unit_uuid = org_unit.get("uuid")
+
+    for manager in org_unit.get("managers", []):
         try:
             manager_uuid = manager["uuid"]
             employee = one(manager.get("employee", []))
@@ -77,8 +95,10 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitMana
                         manager_uuid=UUID(manager_uuid),
                     )
                 )
-        except Exception:
-            logger.warning("Skipping manager: %s", manager, exc_info=True)
+        except Exception as e:
+            logger.warning(
+                f"Skipping manager: {query_dict}. Exception: {e}", exc_info=True
+            )
 
     return unengaged_managers
 

@@ -19,7 +19,7 @@ from .models import ManagerLevel
 from .models import ManagerType
 from .models import OrgUnitManager
 from .models import OrgUnitManagers
-from .queries import CREATE_MANAGER
+from .queries import CREATE_MANAGER, QUERY_GET_MANAGER_ENGAGEMENTS_AND_CHILD_ORG_UNITS
 from .queries import CURRENT_MANAGER
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
@@ -120,6 +120,34 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> OrgUnitManager |
         )
 
     return None
+
+
+async def check_led_adm_managers(
+    gql_client: PersistentGraphQLClient,
+    managers_to_terminate: list[OrgUnitManager]
+) -> list[OrgUnitManager]:
+    """
+    Remove managers from the list of managers to terminate if they:
+    1) Are managers in a parent unit to a _led-adm unit
+    2) Have en active engagement in the _led-adm unit itself
+    (see https://redmine.magenta.dk/issues/63209)
+    """
+    manager_to_remove_from_term_list = []
+    for manager_to_terminate in managers_to_terminate:
+        manager = await gql_client.execute(
+            QUERY_GET_MANAGER_ENGAGEMENTS_AND_CHILD_ORG_UNITS,
+            variable_values={"manager": str(manager_to_terminate.manager_uuid)}
+        )
+        current = one(manager["managers"]["objects"])["current"]
+
+        org_units = current
+        # TODO: 
+        # Fix: returnér UUID på manager og UUID på enhed
+        #      i den kaldende funktion: slå enhed op igen og hvis den har en
+        #      underenhed med "led-adm" og der er et engagement i denne, så
+        #      fjern manager fra term listen.
+
+
 
 
 async def check_manager_engagement(

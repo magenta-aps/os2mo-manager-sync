@@ -206,3 +206,30 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
         }
     """
 )
+
+QUERY_GET_MANAGER_ENGAGEMENTS_AND_CHILD_ORG_UNITS = gql(
+    """
+    query GetManagerEngagementsAndChildOrgUnits($manager: UUID!) {
+      managers(filter: { uuids: [$manager] }) {
+        objects {
+          current {
+            person {
+              uuid
+              engagements {
+                org_unit {
+                  uuid
+                }
+              }
+            }
+            org_unit {
+              children {
+                uuid
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+)

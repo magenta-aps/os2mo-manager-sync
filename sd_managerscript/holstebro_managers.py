@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 import asyncio
 from datetime import datetime
-from datetime import timezone
 from typing import Any
 from uuid import UUID
 
@@ -31,6 +30,13 @@ from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit
 
+try:
+    import zoneinfo
+except ImportError:  # pragma: no cover
+    from backports import zoneinfo  # type: ignore
+
+DEFAULT_TZ = zoneinfo.ZoneInfo("Europe/Copenhagen")
+
 logger = structlog.get_logger()
 
 
@@ -41,44 +47,38 @@ def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool
 
     to_date = engagement["validity"]["to"]
     if to_date is None:
-        return True  # No end date = still active
-    return datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
+        return True  # No to_date = still active
+    return datetime.fromisoformat(to_date) > datetime.now(tz=DEFAULT_TZ)
 
 
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
     Return OrgUnitManager if the manager has no active engagements in the given org-unit.
     """
-    unengaged_managers = []
+    unengaged_managers: list[OrgUnitManager] = []
 
     try:
         validity = one(query_dict["validities"])
         org_unit_uuid = validity["uuid"]
-        managers = validity.get("managers", [])
+    except Exception:
+        logger.error("Invalid query_dict: %s", query_dict, exc_info=True)
+        return unengaged_managers
 
-        for manager in managers:
+    for manager in validity.get("managers", []):
+        try:
             manager_uuid = manager["uuid"]
             employee = one(manager.get("employee", []))
             engagements = employee.get("engagements", [])
 
-            has_active_engagement = any(
-                is_engagement_active(e, org_unit_uuid) for e in engagements
-            )
-            if not has_active_engagement:
+            if not any(is_engagement_active(e, org_unit_uuid) for e in engagements):
                 unengaged_managers.append(
                     OrgUnitManager(
                         org_unit_uuid=UUID(org_unit_uuid),
                         manager_uuid=UUID(manager_uuid),
                     )
                 )
-
-    except (KeyError, IndexError, StopIteration, TypeError) as e:
-        logger.error(
-            "Error processing unengaged managers from query_dict: %s. Exception: %s",
-            query_dict,
-            e,
-            exc_info=True,
-        )
+        except Exception:
+            logger.warning("Skipping manager: %s", manager, exc_info=True)
 
     return unengaged_managers
 
@@ -138,9 +138,9 @@ async def check_manager_engagement(
             for org_unit in data["org_units"]["objects"]
         ]
         root_results = await asyncio.gather(*root_tasks)
+        root_results = [res for res in root_results if res is not None]
         for res in root_results:
-            if res:
-                managers_to_terminate.extend(res)
+            managers_to_terminate.extend(res)
 
         if not recursive:
             return managers_to_terminate
@@ -156,9 +156,9 @@ async def check_manager_engagement(
         get_unengaged_managers(org_unit) for org_unit in data["org_units"]["objects"]
     ]
     check_results = await asyncio.gather(*check_tasks)
+    check_results = [res for res in check_results if res is not None]
     for res in check_results:
-        if res:
-            managers_to_terminate.extend(res)
+        managers_to_terminate.extend(res)
 
     # Recursively check child org-units with children
     child_org_units = [

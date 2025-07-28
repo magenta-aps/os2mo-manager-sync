@@ -187,7 +187,7 @@ async def test_create_missing_manager_levels() -> None:
                 "name": "Niveau 3",
                 "user_key": "niveau 3",
                 "uuid": str(manager_level_3_uuid),
-                "validity": {"from": "1999-01-01"},
+                "validity": {"from": "1900-01-01"},
             }
         },
     )
@@ -198,7 +198,7 @@ async def test_create_missing_manager_levels() -> None:
                 "facet_uuid": str(facet_uuid),
                 "name": "Niveau 4",
                 "user_key": "niveau 4",
-                "validity": {"from": "1999-01-01"},
+                "validity": {"from": "1900-01-01"},
             }
         },
     )

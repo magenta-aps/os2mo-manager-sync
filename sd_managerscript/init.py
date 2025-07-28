@@ -102,7 +102,7 @@ async def create_manager_level(
     name: str,
     user_key: str,
     uuid: UUID | None = None,
-    validity: Validity = {"from": "1999-01-01"},
+    validity: Validity = {"from": "1900-01-01"},
 ) -> UUID:
     """
     Create a manager level class in MO.

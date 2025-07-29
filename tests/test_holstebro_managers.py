@@ -254,16 +254,10 @@ async def test_get_manager_org_units_recursion_disabled(
 
 
 @pytest.mark.parametrize(
-    "org_unit_uuid, root_uuid",
+    "org_unit_uuid",
     [
-        (
-            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
-            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
-        ),
-        (
-            UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
-            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
-        ),
+        (UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),),
+        (UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),),
     ],
 )
 @patch("sd_managerscript.holstebro_managers.query_graphql")
@@ -271,7 +265,6 @@ async def test_check_manager_engagement(
     mock_query_graphql: AsyncMock,
     gql_client: AsyncMock,
     org_unit_uuid: UUID,
-    root_uuid: UUID,
 ) -> None:
     """
     Test check_manager_engagement can check if managers are engaged
@@ -281,7 +274,7 @@ async def test_check_manager_engagement(
     sample_data = get_manager_engagement_data()
     mock_query_graphql.side_effect = sample_data
 
-    managers_list = await check_manager_engagement(gql_client, org_unit_uuid, root_uuid)
+    managers_list = await check_manager_engagement(gql_client, org_unit_uuid)
 
     assert managers_list == [
         OrgUnitManager(
@@ -295,10 +288,6 @@ async def test_check_manager_engagement(
         OrgUnitManager(
             org_unit_uuid=UUID("e054559b-bc15-4203-bced-44375aed1555"),
             manager_uuid=UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
-        ),
-        OrgUnitManager(
-            org_unit_uuid=UUID("0c655440-867d-561e-8c28-2aa0ac8d1e20"),
-            manager_uuid=UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
         ),
     ]
 

@@ -20,10 +20,9 @@ from .models import OrgUnitManager
 from .models import OrgUnitManagers
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
-from .queries import QUERY_MANAGER_ENGAGEMENTS
+from .queries import QUERY_MANAGER_ENGAGEMENTS_ANCESTOR
 from .queries import QUERY_ORG_UNIT_LEVEL
 from .queries import QUERY_ORG_UNITS
-from .queries import QUERY_ROOT_MANAGER_ENGAGEMENTS
 from .queries import UPDATE_MANAGER
 from .terminate import terminate_manager
 from .util import execute_mutator
@@ -106,99 +105,35 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitMana
 async def check_manager_engagement(
     gql_client: PersistentGraphQLClient,
     org_unit_uuid: UUID,
-    root_uuid: UUID,
-    recursive: bool = True,
 ) -> list[OrgUnitManager]:
     """
-    Recursive function, traverse through all org_units and checks if manager has engagement
-    If not: Managers uuid is added to managers_to_terminate for later termination
-
+    Fetches all descendant org-units (including self) and checks whether managers
+    have active engagements. Returns a list of OrgUnitManager instances that should
+    be terminated.
 
     Args:
-        Graphql client
-        org_unit_uuid: UUID of the parent org-unit we want to get child org-units from
-        root_uuid: root_uuid of the Organisation tree.
-                   (root_uuid is fetched from enviromental variable)
-        recursive: If true, check manager engagement recursively
+        gql_client: GraphQL client
+        org_unit_uuid: The UUID of the org-unit to check from (inclusive)
+
     Returns:
-        list of manager UUID's
-
-    Function flow:
-        If pass org_unit_uuid is same as root_uuid:
-            Check manager in root org-unit has active engagement.
-
-        Query org_unit_uuid for child org_units
-
-        For each child org-unit check the assigned manager has active engagement
-        or return manager_uuid for termination
-
-        for each child org_unit check if it has any child org_units.
-        If an org_unit has children the org_units uuid is passed to this function recusively
-
-        TODO: Might optimize this function to avoid checking for root_uuid:
-        https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177689
+        List of OrgUnitManager instances to be terminated.
     """
-    # TODO: add unit test for recursive=False
-
     variables = {"uuid": str(org_unit_uuid)}
+    data = await query_graphql(
+        gql_client, QUERY_MANAGER_ENGAGEMENTS_ANCESTOR, variables
+    )
+
+    org_units = data["org_units"]["objects"]
+    logger.debug("Checking manager engagements in org units", count=len(org_units))
+
     managers_to_terminate = []
 
-    # If this is root org-unit we have to query it separately
-    # For info: the difference between QUERY_ROOT_MANAGER_ENGAGEMENTS and
-    # QUERY_MANAGER_ENGAGEMENTS is that the latter uses org_units(parents: ...) where
-    # the former uses org_units(uuids: ...)
-    # TODO: investigate if this can be refactored
-    if org_unit_uuid == root_uuid or not recursive:
-        data = await query_graphql(
-            gql_client, QUERY_ROOT_MANAGER_ENGAGEMENTS, variables
-        )
-        # Check if manager of root org-unit has active engagement
-        root_tasks = [
-            get_unengaged_managers(org_unit)
-            for org_unit in data["org_units"]["objects"]
-        ]
-        root_results = await asyncio.gather(*root_tasks)
-        root_results = [res for res in root_results if res is not None]
-        for res in root_results:
-            managers_to_terminate.extend(res)
+    check_tasks = [get_unengaged_managers(org_unit) for org_unit in org_units]
+    results = await asyncio.gather(*check_tasks)
+    results = [res for res in results if res is not None]
 
-        if not recursive:
-            return managers_to_terminate
-
-    # Query for child org-units of org_unit_uuid
-    data = await query_graphql(gql_client, QUERY_MANAGER_ENGAGEMENTS, variables)
-
-    # For each child org_unit in data, check the assigned manager has active engagement
-    # or else return managers uuid to terminate
-    logger.debug("Org-units returned from query", response=data)
-    # Concurrently check managers for engagement
-    check_tasks = [
-        get_unengaged_managers(org_unit) for org_unit in data["org_units"]["objects"]
-    ]
-    check_results = await asyncio.gather(*check_tasks)
-    check_results = [res for res in check_results if res is not None]
-    for res in check_results:
+    for res in results:
         managers_to_terminate.extend(res)
-
-    # Recursively check child org-units with children
-    child_org_units = [
-        org_unit
-        for org_unit in data["org_units"]["objects"]
-        if one(org_unit["validities"])["has_children"]
-    ]
-
-    recursive_tasks = [
-        check_manager_engagement(
-            gql_client,
-            one(org_unit["validities"])["uuid"],
-            root_uuid,
-        )
-        for org_unit in child_org_units
-    ]
-    child_results = await asyncio.gather(*recursive_tasks)
-
-    for sublist in child_results:
-        managers_to_terminate.extend(sublist)
 
     return managers_to_terminate
 
@@ -446,16 +381,13 @@ async def create_update_manager(
 async def update_mo_managers(
     gql_client: PersistentGraphQLClient,
     org_unit_uuid: UUID,
-    root_uuid: UUID,
     recursive: bool = True,
     dry_run: bool = False,
 ) -> None:
     """Main function for selecting and updating managers"""
 
     logger.info("Check for unengaged managers...")
-    managers_to_terminate = await check_manager_engagement(
-        gql_client, org_unit_uuid, root_uuid, recursive=recursive
-    )
+    managers_to_terminate = await check_manager_engagement(gql_client, org_unit_uuid)
     logger.debug("Managers to terminate", managers_to_terminate=managers_to_terminate)
 
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)

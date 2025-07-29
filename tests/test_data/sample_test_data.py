@@ -549,35 +549,6 @@ engagement_samples = [
             ],
         },
     },
-    {
-        "org_units": {
-            "objects": [
-                {
-                    "validities": [
-                        {
-                            "uuid": "0c655440-867d-561e-8c28-2aa0ac8d1e20",
-                            "has_children": False,
-                            "managers": [
-                                {
-                                    "uuid": "d0d0ab19-f69d-425e-a089-76610e8329dc",
-                                    "employee": [{"engagements": []}],
-                                }
-                            ],
-                        }
-                    ],
-                },
-                {
-                    "validities": [
-                        {
-                            "uuid": "18443c6b-dbd4-58eb-984e-25b6350d9f50",
-                            "has_children": False,
-                            "managers": [],
-                        }
-                    ],
-                },
-            ]
-        }
-    },
 ]
 
 org_unit_models = [

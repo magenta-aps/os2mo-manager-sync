@@ -17,6 +17,7 @@ from dateutil.tz import tzoffset  # type: ignore
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 from ramodels.mo import Validity  # type: ignore
+from structlog.testing import capture_logs
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.filters import filter_managers
@@ -27,6 +28,7 @@ from sd_managerscript.holstebro_managers import get_current_manager
 from sd_managerscript.holstebro_managers import get_manager_level
 from sd_managerscript.holstebro_managers import get_manager_org_units
 from sd_managerscript.holstebro_managers import get_unengaged_managers
+from sd_managerscript.holstebro_managers import has_valid_led_adm_child
 from sd_managerscript.holstebro_managers import is_manager_correct
 from sd_managerscript.holstebro_managers import update_manager
 from sd_managerscript.mo import get_active_engagements
@@ -311,6 +313,115 @@ async def test_get_unengaged_managers(
     managers_to_terminate = await get_unengaged_managers(query_dict)
 
     assert managers_to_terminate == expected
+
+
+@pytest.mark.parametrize(
+    "query_dict",
+    [
+        {"validities": []},
+        [{"validities": []}, {"validities": []}],
+    ],
+)
+async def test_get_unengaged_managers_invalid_query_dict_error(
+    query_dict: dict,
+) -> None:
+    """Test The input gets filtered correctly to find managers with no active engagement"""
+
+    with capture_logs() as cap_logs:
+        result = await get_unengaged_managers(query_dict)
+
+    assert not result
+
+    assert any("Invalid query_dict" in record["event"] for record in cap_logs)
+
+
+@pytest.mark.parametrize(
+    "query_dict",
+    [
+        {"validities": [{"uuid": uuid4(), "managers": [{"employee": []}]}]},
+        {
+            "validities": [
+                {"uuid": uuid4(), "managers": [{"employee": [{"engagements": []}]}]}
+            ]
+        },
+    ],
+)
+async def test_get_unengaged_managers_invalid_manager_warning(query_dict: dict) -> None:
+    """Test The input gets filtered correctly to find managers with no active engagement"""
+
+    with capture_logs() as cap_logs:
+        result = await get_unengaged_managers(query_dict)
+
+    assert not result
+
+    assert any("Skipping manager" in record["event"] for record in cap_logs)
+
+
+@pytest.mark.parametrize(
+    "org_unit, expected",
+    [
+        (
+            {
+                "name": "Kolding kommune",
+                "children": [{"name": "Kolding kommune led-adm"}],
+            },
+            False,
+        ),
+        ({"name": "Kolding kommune", "children": []}, False),
+        (
+            {
+                "name": "Kolding kommune",
+                "children": [
+                    {"name": "Borgmesterens afdeling"},
+                    {"name": "Teknik og Miljø"},
+                ],
+            },
+            False,
+        ),
+        (
+            {
+                "name": "Kolding kommune",
+                "children": [
+                    {"name": "Borgmesterens afdeling"},
+                    {"name": "Teknik og Miljø"},
+                    {"name": "kolding KOMMUNE_led-adm"},
+                ],
+            },
+            True,
+        ),
+    ],
+)
+async def test_has_valid_led_adm_child(org_unit: dict, expected: bool) -> None:
+    """
+    Tests whether `has_valid_led_adm_child` correctly identifies
+    if an org unit has a valid led-adm child.
+    """
+
+    result = has_valid_led_adm_child(org_unit)
+    assert result == expected
+
+
+async def test_get_unengaged_managers_skips_led_adm_child() -> None:
+    """Should return empty list when org unit has led-adm child"""
+    query_dict = {
+        "validities": [
+            {
+                "name": "Kolding kommune",
+                "children": [{"name": "kolding KOMMUNE_led-adm"}],
+                "managers": [
+                    {
+                        "uuid": str(uuid4()),
+                        "employee": [
+                            {"engagements": [{"org_unit_uuid": str(uuid4())}]}
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+
+    result = await get_unengaged_managers(query_dict)
+    assert not result
 
 
 @pytest.mark.parametrize(

@@ -20,10 +20,10 @@ QUERY_ORG_UNIT_LEVEL = gql(
     """
 )
 
-QUERY_ORG_UNITS = gql(
+QUERY_LEDER_ORG_UNITS = gql(
     """
-        query ($uuid: [UUID!]!) {
-            org_units(filter: { parent: { uuids: $uuid } }) {
+        query {
+            org_units(filter: { query: "_leder" }) {
                 objects {
                     validities {
                         uuid

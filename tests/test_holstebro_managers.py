@@ -219,9 +219,7 @@ async def test_get_manager_org_units_recursion_disabled(
         ),
     ]
 
-    manager_org_units = await get_manager_org_units(
-        mock_query_graphql, parent_uuid, False
-    )
+    manager_org_units = await get_manager_org_units(mock_query_graphql)
 
     # Assert
     assert manager_org_units == [

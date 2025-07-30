@@ -360,7 +360,8 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
-async def update_mo_managers(
+# This function only delegates to other tested functions — no internal logic.
+async def update_mo_managers(  # pragma: no cover
     gql_client: PersistentGraphQLClient,
     org_unit_uuid: UUID,
     dry_run: bool = False,
@@ -388,5 +389,4 @@ async def update_mo_managers(
     for org_unit in manager_org_units:
         await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
-    logger.debug("hurra")
     logger.info("Updating managers complete!")

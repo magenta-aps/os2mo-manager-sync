@@ -1,13 +1,12 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import asyncio
 from datetime import datetime
-from datetime import timezone
 from typing import Any
 from uuid import UUID
 
 import structlog
 from fastapi.encoders import jsonable_encoder
-from more_itertools import collapse
 from more_itertools import one
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
 from ramodels.mo._shared import Validity  # type: ignore
@@ -17,6 +16,7 @@ from .filters import filter_manager_org_units
 from .models import Manager
 from .models import ManagerLevel
 from .models import ManagerType
+from .models import OrgUnitManager
 from .models import OrgUnitManagers
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
@@ -30,91 +30,57 @@ from .util import execute_mutator
 from .util import query_graphql
 from .util import query_org_unit
 
+try:
+    import zoneinfo
+except ImportError:  # pragma: no cover
+    from backports import zoneinfo  # type: ignore
+
+DEFAULT_TZ = zoneinfo.ZoneInfo("Europe/Copenhagen")
+
 logger = structlog.get_logger()
 
 
-async def get_unengaged_managers(query_dict: dict[str, Any]) -> UUID | None:
+def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool:
+    """Return True if engagement is in the org_unit and still active."""
+    if engagement["org_unit_uuid"] != org_unit_uuid:
+        return False
+
+    to_date = engagement["validity"]["to"]
+    if to_date is None:
+        return True  # No to_date = still active
+    return datetime.fromisoformat(to_date) > datetime.now(tz=DEFAULT_TZ)
+
+
+async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
-    Check if manager has an active engagement in this org-unit
-    if not, return manager_uuid.
-
-    Args:
-        query_dict: dict with info on manager details: employee, engagement to date
-                    See example below, as well as query to generate the dict:
-                        .queries: QUERY_MANAGER_ENGAGEMENTS
-    Returns:
-        UUID (manager uuid) if manager has no active engagement
-        None if manager has an active engagement in this org-unit
-
-    Example of query_dict:
-
-    {
-        "objects": [
-            {
-                "validities: [{
-                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
-                    "child_count": 2,
-                    "managers": [
-                        {
-                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
-                            "employee": [
-                                {
-                                    "engagements": [
-                                        {
-                                            "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",
-                                            "validity": {
-                                                "from": "2022-11-20T00:00:00+01:00",
-                                                "to": None,
-                                            },
-                                        },
-                                    ]
-                                }
-                            ],
-                        }
-                    ],
-                }]
-            }
-        ],
-    }
-
-
-
+    Return OrgUnitManager if the manager has no active engagements in the given org-unit.
     """
-    # TODO: Replace nested if tree with filter?
-    # (https://git.magenta.dk/rammearkitektur/os2mo-manager-sync/-/merge_requests/7#note_177686)
+    unengaged_managers: list[OrgUnitManager] = []
 
-    # if org-unit has any managers
-    if one(query_dict["validities"])["managers"]:
-        manager_uuid = one(one(query_dict["validities"])["managers"])["uuid"]
+    try:
+        validity = one(query_dict["validities"])
+        org_unit_uuid = validity["uuid"]
+    except Exception:
+        logger.error("Invalid query_dict: %s", query_dict, exc_info=True)
+        return unengaged_managers
 
-        # if employee has any engagements, check it's still active
-        engagements = one(one(one(query_dict["validities"])["managers"])["employee"])[
-            "engagements"
-        ]
-        # Only get engagements relevant for this org_unit
-        if engagements:
-            relevant_engagements = list(
-                filter(
-                    lambda eng: eng["org_unit_uuid"]
-                    == one(query_dict["validities"])["uuid"],
-                    engagements,
+    for manager in validity.get("managers", []):
+        try:
+            manager_uuid = manager["uuid"]
+            employee = one(manager.get("employee", []))
+            engagements = employee.get("engagements", [])
+
+            if not any(is_engagement_active(e, org_unit_uuid) for e in engagements):
+                unengaged_managers.append(
+                    OrgUnitManager(
+                        org_unit_uuid=UUID(org_unit_uuid),
+                        manager_uuid=UUID(manager_uuid),
+                    )
                 )
-            )
-            if relevant_engagements:
-                to_dates = [
-                    engagement["validity"]["to"] for engagement in relevant_engagements
-                ]
+        except Exception:
+            logger.warning("Skipping manager: %s", manager, exc_info=True)
 
-                # Check if at least one of the engagements to_date is after
-                # today or None in which case there is an active engagement
-                for to_date in to_dates:
-                    if not to_date or (
-                        datetime.fromisoformat(to_date) > datetime.now(tz=timezone.utc)
-                    ):
-                        return None
-
-        return UUID(manager_uuid)
-    return None
+    return unengaged_managers
 
 
 async def check_manager_engagement(
@@ -122,7 +88,7 @@ async def check_manager_engagement(
     org_unit_uuid: UUID,
     root_uuid: UUID,
     recursive: bool = True,
-) -> list[UUID]:
+) -> list[OrgUnitManager]:
     """
     Recursive function, traverse through all org_units and checks if manager has engagement
     If not: Managers uuid is added to managers_to_terminate for later termination
@@ -167,11 +133,15 @@ async def check_manager_engagement(
             gql_client, QUERY_ROOT_MANAGER_ENGAGEMENTS, variables
         )
         # Check if manager of root org-unit has active engagement
-        managers_to_terminate = [
-            out
+        root_tasks = [
+            get_unengaged_managers(org_unit)
             for org_unit in data["org_units"]["objects"]
-            if (out := await get_unengaged_managers(org_unit))
         ]
+        root_results = await asyncio.gather(*root_tasks)
+        root_results = [res for res in root_results if res is not None]
+        for res in root_results:
+            managers_to_terminate.extend(res)
+
         if not recursive:
             return managers_to_terminate
 
@@ -181,27 +151,36 @@ async def check_manager_engagement(
     # For each child org_unit in data, check the assigned manager has active engagement
     # or else return managers uuid to terminate
     logger.debug("Org-units returned from query", response=data)
-    managers_to_terminate += [
-        out
+    # Concurrently check managers for engagement
+    check_tasks = [
+        get_unengaged_managers(org_unit) for org_unit in data["org_units"]["objects"]
+    ]
+    check_results = await asyncio.gather(*check_tasks)
+    check_results = [res for res in check_results if res is not None]
+    for res in check_results:
+        managers_to_terminate.extend(res)
+
+    # Recursively check child org-units with children
+    child_org_units = [
+        org_unit
         for org_unit in data["org_units"]["objects"]
-        if (out := await get_unengaged_managers(org_unit))
+        if one(org_unit["validities"])["has_children"]
     ]
 
-    # Fetch org-units with children
-    child_org_units = filter(
-        lambda org_unit: one(org_unit["validities"])["child_count"] > 0,
-        data["org_units"]["objects"],
-    )
-
-    managers_to_terminate += [
-        await check_manager_engagement(
-            gql_client, one(org_unit["validities"])["uuid"], root_uuid
-        )  # type: ignore
+    recursive_tasks = [
+        check_manager_engagement(
+            gql_client,
+            one(org_unit["validities"])["uuid"],
+            root_uuid,
+        )
         for org_unit in child_org_units
     ]
+    child_results = await asyncio.gather(*recursive_tasks)
 
-    managers = list(collapse(managers_to_terminate, base_type=UUID))
-    return managers
+    for sublist in child_results:
+        managers_to_terminate.extend(sublist)
+
+    return managers_to_terminate
 
 
 async def get_manager_org_units(
@@ -220,32 +199,33 @@ async def get_manager_org_units(
 
     """
 
+    # TODO: This whole recursive thing, could possibly be simplyfied by just
+    # fetching all units (potentially with pagination).
+    # It seems redundant, compared to the state GraphQL is in now.
     variables = {"uuid": str(org_unit_uuid)}
     data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
     logger.debug("Org-units returned from query", response=data)
-    child_org_units = filter(lambda ou: jsonable_encoder(ou)["child_count"] > 0, data)
 
-    # Selecting org_unit with names ending in "_leder" but NOT starting
-    # with "Ø_"
-    # TODO: we should probably check that there is only one '_leder' in each
-    #  org unit level in the OU-tree
-    manager_list = list(
-        filter(
-            lambda ou: (jsonable_encoder(ou)["name"].lower().strip()[-6:] == "_leder")
-            and (jsonable_encoder(ou)["name"].strip()[:2] != "Ø_"),
-            data,
-        )
-    )
-    logger.debug("Manager list up until now...", org_units=manager_list)
+    # Select _leder units that are not prefixed with 'Ø_'
+    leder_units = [
+        ou
+        for ou in data
+        if ou.name.lower().strip().endswith("_leder")
+        and not ou.name.strip().startswith("Ø_")
+    ]
+
     if recursive:
-        manager_list += [
-            await get_manager_org_units(  # type: ignore
-                gql_client, UUID(jsonable_encoder(org_unit)["uuid"])
-            )
-            for org_unit in child_org_units
-        ]
-    managers = list(collapse(manager_list, base_type=OrgUnitManagers))
-    return managers
+        child_org_units = [ou for ou in data if ou.has_children]
+        recursive_results = await asyncio.gather(
+            *[
+                get_manager_org_units(gql_client, ou.uuid, recursive=True)
+                for ou in child_org_units
+            ]
+        )
+        for result in recursive_results:
+            leder_units.extend(result)
+
+    return leder_units
 
 
 async def get_current_manager(
@@ -299,6 +279,8 @@ async def create_manager_object(
 
     # We need to fetch the first element in associations as there could be
     # more than one association. But they would all refer to the same employee
+    # Not sure that's true ^
+    # TODO: add missing fields
     manager = Manager(
         employee=org_unit.associations[0].employee_uuid,
         org_unit=org_unit.uuid,
@@ -308,7 +290,7 @@ async def create_manager_object(
             from_date=datetime.today().date().isoformat(),
             to_date=None,
         ),
-    )  # type: ignore
+    )
 
     logger.info(f"Manager object created: {manager}")
     return manager
@@ -388,13 +370,12 @@ async def get_manager_level(
     """
 
     # Assign manager level based on "NYx" org_unit_level_uuid
-    # TODO: use Pydantic model instead of dict in the ENV
-    manager_level_dict = one(get_settings().manager_level_mapping)
+    manager_level_dict = get_settings().manager_level_mapping
     org_unit_level_uuid = org_unit.parent.org_unit_level_uuid
 
     # If parent org-unit name is ending with "led-adm"
     # we fetch org_unit_level_uuid from org-unit two levels up
-    if org_unit.parent.name.strip()[-7:] == "led-adm":
+    if org_unit.parent.name.strip().endswith("led-adm"):
         variables = {"uuids": str(org_unit.parent.parent_uuid)}
         data = await gql_client.execute(QUERY_ORG_UNIT_LEVEL, variable_values=variables)
 
@@ -458,8 +439,10 @@ async def update_mo_managers(
     logger.debug("Managers to terminate", managers_to_terminate=managers_to_terminate)
 
     logger.info("Terminate unengaged managers", manager=managers_to_terminate)
-    for manager_uuid in managers_to_terminate:
-        await terminate_manager(gql_client, manager_uuid, dry_run=dry_run)
+    for org_unit_manager in managers_to_terminate:
+        await terminate_manager(
+            gql_client, org_unit_manager.manager_uuid, dry_run=dry_run
+        )
 
     logger.info("Getting manager org units (units ending in _leder)...")
     manager_org_units = await get_manager_org_units(
@@ -474,4 +457,5 @@ async def update_mo_managers(
     for org_unit in manager_org_units:
         await create_update_manager(gql_client, org_unit, dry_run=dry_run)
 
+    logger.debug("hurra")
     logger.info("Updating managers complete!")

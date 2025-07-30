@@ -27,7 +27,7 @@ def test_remove_org_unit_without_associations() -> None:
         OrgUnitManagers(
             uuid=uuid4(),
             name="OU name",
-            child_count=0,
+            has_children=False,
             associations=[
                 Association(
                     uuid=uuid4(),
@@ -40,7 +40,11 @@ def test_remove_org_unit_without_associations() -> None:
             parent=parent,
         ),
         OrgUnitManagers(
-            uuid=uuid4(), name="OU name", child_count=0, associations=[], parent=parent
+            uuid=uuid4(),
+            name="OU name",
+            has_children=False,
+            associations=[],
+            parent=parent,
         ),
     ]
 

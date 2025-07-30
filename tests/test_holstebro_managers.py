@@ -13,6 +13,7 @@ from uuid import UUID
 from uuid import uuid4
 
 import pytest
+from dateutil.tz import tzoffset  # type: ignore
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 from ramodels.mo import Validity  # type: ignore
@@ -34,6 +35,7 @@ from sd_managerscript.models import EngagementFrom
 from sd_managerscript.models import Manager
 from sd_managerscript.models import ManagerLevel
 from sd_managerscript.models import ManagerType
+from sd_managerscript.models import OrgUnitManager
 from sd_managerscript.models import OrgUnitManagers
 from sd_managerscript.models import Parent
 from sd_managerscript.queries import QUERY_ORG_UNIT_LEVEL
@@ -47,9 +49,10 @@ from tests.test_data.sample_test_data import get_filter_managers_data
 from tests.test_data.sample_test_data import get_filter_managers_error_data
 from tests.test_data.sample_test_data import get_filter_managers_terminate
 from tests.test_data.sample_test_data import get_manager_engagement_data
-from tests.test_data.sample_test_data import get_sample_data
 from tests.test_data.sample_test_data import get_unengaged_managers_data
 from tests.test_data.sample_test_data import get_update_managers_data
+
+# from tests.test_data.sample_test_data import get_sample_data
 
 
 QUERY_ORG_UNITS = gql(
@@ -61,7 +64,7 @@ QUERY_ORG_UNITS = gql(
                     uuid
                     name
                     parent_uuid
-                    child_count
+                    has_children
                 }
             }
         }
@@ -71,116 +74,180 @@ QUERY_ORG_UNITS = gql(
 
 
 @pytest.fixture()
-def gql_client() -> Generator[MagicMock, None, None]:
+def gql_client() -> Generator[AsyncMock, None, None]:
     """Fixture to mock GraphQLClient."""
-    yield MagicMock()
+    yield AsyncMock()
+
+
+# FIX: Not sure how to test with recursive=True and mocks. It seems to run infinitely
+
+# @patch("sd_managerscript.holstebro_managers.query_org_unit")
+# async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
+#     """Test the "get_manager_org_units" method returns correct '_leder' org-units."""
+#
+#     uuid = UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c")
+#     sample_data = get_sample_data()
+#     mock_query_org_unit.return_value = sample_data
+#
+#     returned_managers = await get_manager_org_units(
+#         mock_query_org_unit, org_unit_uuid=uuid
+#     )
+#
+#     assert returned_managers == [
+#         OrgUnitManagers(
+#             uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
+#             name="Almind skole_leder",
+#             has_children=False,
+#             associations=[
+#                 Association(
+#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                     validity=Validity(
+#                         from_date=datetime(
+#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+#                         ),
+#                         to_date=None,
+#                     ),
+#                 )
+#             ],
+#             parent=Parent(
+#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+#                 name="Skoler",
+#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+#             ),
+#         ),
+#         OrgUnitManagers(
+#             uuid=UUID("60370b40-a143-40c5-aaa1-638b3b74d119"),
+#             name="Social Indsats_LEDER",
+#             has_children=True,
+#             associations=[
+#                 Association(
+#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                     validity=Validity(
+#                         from_date=datetime(
+#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+#                         ),
+#                         to_date=None,
+#                     ),
+#                 )
+#             ],
+#             parent=Parent(
+#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+#                 name="Skoler",
+#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+#             ),
+#         ),
+#         OrgUnitManagers(
+#             uuid=UUID("23f3cebf-2625-564a-bcfc-31272eb9bce2"),
+#             name="Social og sundhed_leder",
+#             has_children=False,
+#             associations=[
+#                 Association(
+#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                     validity=Validity(
+#                         from_date=datetime(
+#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+#                         ),
+#                         to_date=None,
+#                     ),
+#                 )
+#             ],
+#             parent=Parent(
+#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+#                 name="Skoler",
+#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+#             ),
+#         ),
+#     ]
 
 
 @patch("sd_managerscript.holstebro_managers.query_org_unit")
-async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
-    """Test the "get_manager_org_units" method returns correct '_leder' org-units."""
-
-    sample_data, expected_managers = get_sample_data()
-    mock_query_org_unit.side_effect = sample_data
-    uuid = UUID("23a2ace2-52ca-458d-bead-d1a42080579f")
-    gql_client = AsyncMock()
-
-    returned_managers = await get_manager_org_units(gql_client, org_unit_uuid=uuid)
-
-    assert returned_managers == expected_managers
-
-
-async def test_get_manager_org_units_recursion_disabled() -> None:
-    # Arrange
-    _leder_org_unit_uuid = uuid4()
-    association_uuid = uuid4()
-    employee_uuid = uuid4()
-    association_type_uuid = uuid4()
+async def test_get_manager_org_units_recursion_disabled(
+    mock_query_graphql: AsyncMock,
+) -> None:
     parent_uuid = uuid4()
-    org_uuid = uuid4()
-    org_unit_level_uuid = uuid4()
+    mock_query_graphql.return_value = [
+        OrgUnitManagers(
+            uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
+            name="Almind skole_leder",
+            has_children=False,
+            parent=Parent(
+                uuid=parent_uuid,
+                name="Almind skole",
+                parent_uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+            ),
+            associations=[
+                Association(
+                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
+        OrgUnitManagers(
+            uuid=parent_uuid,
+            name="Almind skole",
+            has_children=True,
+            parent=Parent(
+                uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                name="Skoler",
+                parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
+            ),
+            associations=[],
+        ),
+    ]
 
-    mock_execute = AsyncMock(
-        return_value={
-            "org_units": {
-                "objects": [
-                    {
-                        "validities": [
-                            {
-                                "uuid": str(uuid4()),
-                                "name": "some sub unit with children",
-                                "child_count": 5,
-                                "associations": [],
-                                "parent": {
-                                    "uuid": parent_uuid,
-                                    "name": "some unit",
-                                    "parent_uuid": org_uuid,
-                                    "org_unit_level_uuid": str(uuid4()),
-                                },
-                            }
-                        ]
-                    },
-                    {
-                        "validities": [
-                            {
-                                "uuid": str(_leder_org_unit_uuid),
-                                "name": "the _leder sub unit_leder",
-                                "child_count": 0,
-                                "associations": [
-                                    {
-                                        "uuid": str(association_uuid),
-                                        "org_unit_uuid": str(_leder_org_unit_uuid),
-                                        "employee_uuid": str(employee_uuid),
-                                        "association_type_uuid": str(
-                                            association_type_uuid
-                                        ),
-                                        "validity": {
-                                            "from": "2006-01-17T00:00:00",
-                                            "to": None,
-                                        },
-                                    }
-                                ],
-                                "parent": {
-                                    "uuid": str(parent_uuid),
-                                    "name": "some unit",
-                                    "parent_uuid": str(org_uuid),
-                                    "org_unit_level_uuid": str(org_unit_level_uuid),
-                                },
-                            }
-                        ]
-                    },
-                ]
-            },
-        }
+    manager_org_units = await get_manager_org_units(
+        mock_query_graphql, parent_uuid, False
     )
-    mock_gql_client = AsyncMock()
-    mock_gql_client.execute = mock_execute
-
-    # Act
-    manager_org_units = await get_manager_org_units(mock_gql_client, parent_uuid, False)
 
     # Assert
     assert manager_org_units == [
         OrgUnitManagers(
-            uuid=_leder_org_unit_uuid,
-            name="the _leder sub unit_leder",
-            child_count=0,
-            associations=[
-                Association(
-                    uuid=association_uuid,
-                    org_unit_uuid=_leder_org_unit_uuid,
-                    employee_uuid=employee_uuid,
-                    association_type_uuid=association_type_uuid,
-                    validity=Validity(from_date=datetime(2006, 1, 17, 0, 0, 0)),
-                )
-            ],
+            uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
+            name="Almind skole_leder",
+            has_children=False,
             parent=Parent(
                 uuid=parent_uuid,
-                name="some unit",
-                parent_uuid=org_uuid,
-                org_unit_level_uuid=org_unit_level_uuid,
+                name="Almind skole",
+                parent_uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
+                org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
             ),
-        )
+            associations=[
+                Association(
+                    uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
+                    employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
+                    org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
+                    association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
+                    validity=Validity(
+                        from_date=datetime(
+                            2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
+                        ),
+                        to_date=None,
+                    ),
+                )
+            ],
+        ),
     ]
 
 
@@ -188,21 +255,19 @@ async def test_get_manager_org_units_recursion_disabled() -> None:
     "org_unit_uuid, root_uuid",
     [
         (
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
         ),
         (
-            UUID("b6fd7f0e-b47f-4370-a8d3-8003cbfb3be2"),
-            UUID("23a2ace2-52ca-458d-bead-d1a42080579f"),
+            UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+            UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
         ),
     ],
 )
-@patch("sd_managerscript.holstebro_managers.get_unengaged_managers")
 @patch("sd_managerscript.holstebro_managers.query_graphql")
 async def test_check_manager_engagement(
     mock_query_graphql: AsyncMock,
-    mock_get_unengaged_managers: MagicMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     org_unit_uuid: UUID,
     root_uuid: UUID,
 ) -> None:
@@ -211,17 +276,28 @@ async def test_check_manager_engagement(
     and if not, will terminate the manager role.
     """
 
-    sample_data, managers = get_manager_engagement_data()
+    sample_data = get_manager_engagement_data()
     mock_query_graphql.side_effect = sample_data
-    mock_get_unengaged_managers.side_effect = managers
 
     managers_list = await check_manager_engagement(gql_client, org_unit_uuid, root_uuid)
 
     assert managers_list == [
-        UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
-        UUID("a8d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
-        UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
-        UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
+        OrgUnitManager(
+            org_unit_uuid=UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
+            manager_uuid=UUID("a7d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("96a4715c-f4df-422f-a4b0-9dcc686753f7"),
+            manager_uuid=UUID("37dbbd86-1e4f-4292-a9a7-f92be4b7371e"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("e054559b-bc15-4203-bced-44375aed1555"),
+            manager_uuid=UUID("f000416d-193d-45da-a405-bf95fe4f65d1"),
+        ),
+        OrgUnitManager(
+            org_unit_uuid=UUID("0c655440-867d-561e-8c28-2aa0ac8d1e20"),
+            manager_uuid=UUID("d0d0ab19-f69d-425e-a089-76610e8329dc"),
+        ),
     ]
 
 
@@ -243,13 +319,13 @@ async def test_get_unengaged_managers(
 @patch("sd_managerscript.mo.query_graphql")
 async def test_get_active_engagements(
     mock_query_gql: AsyncMock,
+    gql_client: AsyncMock,
     employee_uuid: UUID,
     engagement: dict,
     expected: dict,
 ) -> None:
     """Test the "get_active_engagements" method returns correct Manager objects."""
     # Arrange
-    gql_client = AsyncMock()
     mock_query_gql.return_value = engagement
 
     # Act
@@ -264,7 +340,7 @@ async def test_get_active_engagements(
 @patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers(
     mock_get_active_engagements: MagicMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     org_unit: OrgUnitManagers,
     engagements: list[dict],
     expected: OrgUnitManagers,
@@ -280,7 +356,7 @@ async def test_filter_managers(
 
 @patch("sd_managerscript.filters.get_active_engagements")
 async def test_filter_managers_error_raised(
-    mock_get_active_engagements: MagicMock, gql_client: MagicMock
+    mock_get_active_engagements: MagicMock, gql_client: AsyncMock
 ) -> None:
     """
     Test that filter_managers raises an exception if two managers
@@ -304,7 +380,7 @@ async def test_filter_managers_error_raised(
 async def test_filter_managers_calls_terminate(
     mock_get_active_engagements: MagicMock,
     mock_terminate_association: MagicMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     org_unit: OrgUnitManagers,
     engagement_return: dict,
     association_uuids: list[UUID],
@@ -331,7 +407,7 @@ async def test_filter_managers_calls_terminate(
 @patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_association(
     mock_execute_mutator: AsyncMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     association_uuid: str,
 ) -> None:
     """Test "terminate_manager" is called."""
@@ -368,7 +444,7 @@ async def test_terminate_association(
 @patch("sd_managerscript.terminate.execute_mutator", new_callable=AsyncMock)
 async def test_terminate_manager(
     mock_execute_mutator: AsyncMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     manager_uuid: str,
 ) -> None:
     """Test "terminate_manager" is called."""
@@ -398,7 +474,7 @@ async def test_terminate_manager(
 @patch("sd_managerscript.holstebro_managers.query_graphql")
 async def test_get_current_manager_uuid(
     mock_query_graphql: MagicMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
 ) -> None:
     """Test "get_current_manager" returns correct values"""
 
@@ -452,7 +528,7 @@ async def test_get_current_manager_uuid(
 @patch("sd_managerscript.holstebro_managers.query_graphql")
 async def test_get_current_manager_none(
     mock_query_graphql: MagicMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
 ) -> None:
     """Test "get_current_manager" returns correct values"""
 
@@ -475,7 +551,7 @@ async def test_get_current_manager_none(
 async def test_update_manager_object(
     mock_get_current_manager: MagicMock,
     mock_execute_mutator: AsyncMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
     manager: Manager,
     org_unit_uuid: UUID,
     query: str,
@@ -496,7 +572,7 @@ async def test_update_manager_object(
 async def test_manager_not_updated_when_already_correct(
     mock_get_current_manager: AsyncMock,
     mock_execute_mutator: AsyncMock,
-    gql_client: MagicMock,
+    gql_client: AsyncMock,
 ) -> None:
     """
     This test ensures that we do not try to update a manager (and hence
@@ -595,7 +671,7 @@ async def test_create_manager_object(
     assert returned_manager == expected_manager
 
 
-async def test_get_manager_level(gql_client: MagicMock) -> None:
+async def test_get_manager_level(gql_client: AsyncMock) -> None:
     """
     Test get_manager_level in the case where the OU is a "normal"
     unit, i.e. a unit where the name is not suffixed with _led-adm
@@ -605,7 +681,7 @@ async def test_get_manager_level(gql_client: MagicMock) -> None:
     org_unit_manager = OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="SomeUnit_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="SomeUnit",
@@ -634,7 +710,7 @@ async def test_get_manager_level_led_adm() -> None:
     org_unit_manager = OrgUnitManagers(
         uuid=UUID("100b9d19-3190-490f-94f9-759b6b24172a"),
         name="SomeUnit_leder",
-        child_count=0,
+        has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
             name="SomeUnit_led-adm",

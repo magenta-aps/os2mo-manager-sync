@@ -33,8 +33,7 @@ class Settings(BaseSettings):
     responsibility_uuid: UUID = Field(
         description="UUID defining responsibility. Same for all managers"
     )
-    # manager_level_mapping: list of dict used as Pydantic doesn't accept dict types
-    manager_level_mapping: list = Field(
+    manager_level_mapping: dict[str, str] = Field(
         description="Mapping dict from org-unit level to manager level"
     )
     manager_level_create: list[ManagerLevel]

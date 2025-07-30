@@ -69,7 +69,6 @@ async def test_create_manager_level(
     gql_client: PersistentGraphQLClient,  # noqa: F811
 ) -> None:  # noqa: F811
     # Arrange
-    org_uuid = uuid4()
     facet_uuid = uuid4()
     class_uuid = uuid4()
 
@@ -78,7 +77,7 @@ async def test_create_manager_level(
 
     # Act
     create_manager_level_uuid = await create_manager_level(
-        gql_client, facet_uuid, "Name", org_uuid, "name"
+        gql_client, facet_uuid, "Name", "name", validity={"from": "2020-01-01"}
     )
 
     # Assert
@@ -89,8 +88,8 @@ async def test_create_manager_level(
             "input": {
                 "facet_uuid": str(facet_uuid),
                 "name": "Name",
-                "org_uuid": str(org_uuid),
                 "user_key": "name",
+                "validity": {"from": "2020-01-01"},
             }
         },
     )
@@ -100,7 +99,6 @@ async def test_create_manager_level_with_uuid(
     gql_client: PersistentGraphQLClient,  # noqa: F811
 ) -> None:
     # Arrange
-    org_uuid = uuid4()
     facet_uuid = uuid4()
     class_uuid = uuid4()
 
@@ -109,7 +107,12 @@ async def test_create_manager_level_with_uuid(
 
     # Act
     create_manager_level_uuid = await create_manager_level(
-        gql_client, facet_uuid, "Name", org_uuid, "name", class_uuid
+        gql_client,
+        facet_uuid,
+        "Name",
+        "name",
+        class_uuid,
+        validity={"from": "2020-01-01"},
     )
 
     # Assert
@@ -120,9 +123,9 @@ async def test_create_manager_level_with_uuid(
             "input": {
                 "facet_uuid": str(facet_uuid),
                 "name": "Name",
-                "org_uuid": str(org_uuid),
                 "user_key": "name",
                 "uuid": str(class_uuid),
+                "validity": {"from": "2020-01-01"},
             }
         },
     )
@@ -130,14 +133,12 @@ async def test_create_manager_level_with_uuid(
 
 async def test_create_missing_manager_levels() -> None:
     # Arrange
-    org_uuid = uuid4()
     facet_uuid = uuid4()
     manager_level_1_uuid = uuid4()
     manager_level_3_uuid = uuid4()
 
     mock_execute = AsyncMock(
         side_effect=[
-            {"org": {"uuid": str(org_uuid)}},
             {
                 "facets": {
                     "objects": [
@@ -174,9 +175,9 @@ async def test_create_missing_manager_levels() -> None:
 
     # Assert
 
-    # One for getting the org UUID + one for getting existing facet and classes +
+    # One for getting existing facet and classes +
     # two for creating the two missing manager levels = 4
-    assert 4 == mock_execute.await_count
+    assert 3 == mock_execute.await_count
 
     mock_execute.assert_any_await(
         MANAGER_LEVEL_CREATE,
@@ -184,9 +185,9 @@ async def test_create_missing_manager_levels() -> None:
             "input": {
                 "facet_uuid": str(facet_uuid),
                 "name": "Niveau 3",
-                "org_uuid": str(org_uuid),
                 "user_key": "niveau 3",
                 "uuid": str(manager_level_3_uuid),
+                "validity": {"from": "1900-01-01"},
             }
         },
     )
@@ -196,8 +197,8 @@ async def test_create_missing_manager_levels() -> None:
             "input": {
                 "facet_uuid": str(facet_uuid),
                 "name": "Niveau 4",
-                "org_uuid": str(org_uuid),
                 "user_key": "niveau 4",
+                "validity": {"from": "1900-01-01"},
             }
         },
     )

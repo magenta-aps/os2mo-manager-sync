@@ -68,6 +68,11 @@ class Parent(BaseModel):
     org_unit_level_uuid: UUID = Field(description="UUID of the parent org-unit level.")
 
 
+class OrgUnitManager(BaseModel):
+    org_unit_uuid: UUID
+    manager_uuid: UUID
+
+
 class OrgUnitManagers(BaseModel):
     """
     Organisation unit with managers
@@ -80,7 +85,9 @@ class OrgUnitManagers(BaseModel):
 
     uuid: UUID = Field(description="UUID of the org-unit.")
     name: str = Field(description="Name of the created organisation unit.")
-    child_count: int = Field(description="Number of child org-units.")
+    has_children: bool = Field(
+        description="Returns whether the organisation unit has children."
+    )
     associations: list[Association] = Field(description="Association object.")
     parent: Parent = Field(description="Details for parent org-unit.")
 

@@ -7,6 +7,7 @@ from gql import gql  # type: ignore
 from more_itertools import one
 from pydantic import BaseModel
 from raclients.graph.client import PersistentGraphQLClient  # type: ignore
+from ramodels.mo import Validity  # type: ignore
 
 from .queries import QUERY_ORG
 
@@ -99,9 +100,9 @@ async def create_manager_level(
     gql_client: PersistentGraphQLClient,
     facet_uuid: UUID,
     name: str,
-    org_uuid: UUID,
     user_key: str,
     uuid: UUID | None = None,
+    validity: Validity = {"from": "1900-01-01"},
 ) -> UUID:
     """
     Create a manager level class in MO.
@@ -110,7 +111,6 @@ async def create_manager_level(
         gql_client: GraphQL client used to call MO
         facet_uuid: UUID of the manager level facet in MO
         name: Name of the manager level class
-        org_uuid: UUID of the MO organisation
         user_key: User key of the manager level class
         uuid: UUID of the manager level class
     Returns:
@@ -120,8 +120,8 @@ async def create_manager_level(
     gql_input = {
         "facet_uuid": str(facet_uuid),
         "name": name,
-        "org_uuid": str(org_uuid),
         "user_key": user_key,
+        "validity": validity,
     }
     if uuid is not None:
         gql_input["uuid"] = str(uuid)
@@ -150,7 +150,6 @@ async def create_missing_manager_levels(
 
     logger.info("Creating missing manager levels...")
 
-    org_uuid = await get_organisation(gql_client)
     facet_uuid, existing_manager_levels = await get_manager_level_facet_and_classes(
         gql_client
     )
@@ -165,7 +164,6 @@ async def create_missing_manager_levels(
             gql_client,
             facet_uuid,
             manager_level.name,
-            org_uuid,
             manager_level.user_key,
             manager_level.uuid,
         )

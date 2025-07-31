@@ -165,7 +165,14 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
                             uuid
                             employee {
                                 engagements {
-                                    org_unit_uuid
+                                    org_unit {
+                                        name
+                                        uuid
+                                        parent {
+                                            name
+                                            uuid
+                                        }
+                                    }
                                     validity {
                                         from
                                         to
@@ -192,7 +199,14 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
                             uuid
                             employee {
                                 engagements {
-                                    org_unit_uuid
+                                    org_unit {
+                                        name
+                                        uuid
+                                        parent {
+                                            name
+                                            uuid
+                                        }
+                                    }
                                     validity {
                                         from
                                         to

@@ -3,6 +3,7 @@
 import asyncio
 from datetime import datetime
 from typing import Any
+from typing import cast
 from uuid import UUID
 
 import structlog
@@ -40,15 +41,29 @@ DEFAULT_TZ = zoneinfo.ZoneInfo("Europe/Copenhagen")
 logger = structlog.get_logger()
 
 
-def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool:
-    """Return True if engagement is in the org_unit and still active."""
-    if engagement["org_unit_uuid"] != org_unit_uuid:
-        return False
+def is_engagement_active(engagement: dict[str, Any]) -> bool:
+    """Return True if engagement is active."""
 
     to_date = engagement["validity"]["to"]
     if to_date is None:
         return True  # No to_date = still active
     return datetime.fromisoformat(to_date) > datetime.now(tz=DEFAULT_TZ)
+
+
+def is_led_adm_unit(org_unit: dict) -> bool:
+    """
+    Returns True if the org unit's name ends with '_led-adm' and its parent's
+    name matches the base name (without '_led-adm').
+    """
+    name = cast(str, org_unit.get("name", "")).lower().strip()
+    if not name.endswith("_led-adm"):
+        return False
+
+    parent = org_unit.get("parent", {})
+    parent_name = cast(str, parent.get("name", "")).lower().strip()
+
+    base_name = name.removesuffix("_led-adm")
+    return parent_name == base_name
 
 
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
@@ -58,27 +73,47 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitMana
     unengaged_managers: list[OrgUnitManager] = []
 
     try:
-        validity = one(query_dict["validities"])
-        org_unit_uuid = validity["uuid"]
-    except Exception:
-        logger.error("Invalid query_dict: %s", query_dict, exc_info=True)
+        org_unit = one(query_dict["validities"])
+    except Exception as e:
+        logger.error(f"Invalid query_dict: {query_dict}. Exception: {e}", exc_info=True)
         return unengaged_managers
 
-    for manager in validity.get("managers", []):
+    org_unit_uuid = org_unit.get("uuid")
+    for manager in org_unit.get("managers", []):
         try:
             manager_uuid = manager["uuid"]
             employee = one(manager.get("employee", []))
             engagements = employee.get("engagements", [])
 
-            if not any(is_engagement_active(e, org_unit_uuid) for e in engagements):
-                unengaged_managers.append(
-                    OrgUnitManager(
-                        org_unit_uuid=UUID(org_unit_uuid),
-                        manager_uuid=UUID(manager_uuid),
-                    )
+            # Check for active engagement in this org_unit
+            has_active_engagement = any(
+                is_engagement_active(e)
+                and one(e["org_unit"]).get("uuid") == org_unit_uuid
+                for e in engagements
+            )
+            if has_active_engagement:
+                continue
+
+            # Check for active engagement in a `_led-adm` unit that's a child of this org_unit
+            has_active_led_adm_engagement = any(
+                is_engagement_active(e)
+                and is_led_adm_unit(one(e["org_unit"]))
+                and one(e["org_unit"]).get("parent", {}).get("uuid") == org_unit_uuid
+                for e in engagements
+            )
+            if has_active_led_adm_engagement:
+                continue
+
+            unengaged_managers.append(
+                OrgUnitManager(
+                    org_unit_uuid=UUID(org_unit_uuid),
+                    manager_uuid=UUID(manager_uuid),
                 )
-        except Exception:
-            logger.warning("Skipping manager: %s", manager, exc_info=True)
+            )
+        except Exception as e:
+            logger.warning(
+                f"Skipping manager: {query_dict}. Exception: {e}", exc_info=True
+            )
 
     return unengaged_managers
 
@@ -423,7 +458,8 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
-async def update_mo_managers(
+# This function only delegates to other tested functions — no internal logic.
+async def update_mo_managers(  # pragma: no cover
     gql_client: PersistentGraphQLClient,
     org_unit_uuid: UUID,
     root_uuid: UUID,

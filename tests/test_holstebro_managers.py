@@ -17,6 +17,7 @@ from dateutil.tz import tzoffset  # type: ignore
 from freezegun import freeze_time  # type: ignore
 from gql import gql  # type: ignore
 from ramodels.mo import Validity  # type: ignore
+from structlog.testing import capture_logs
 
 from sd_managerscript.exceptions import ConflictingManagers  # type: ignore
 from sd_managerscript.filters import filter_managers
@@ -283,7 +284,7 @@ async def test_check_manager_engagement(
 
     assert managers_list == [
         OrgUnitManager(
-            org_unit_uuid=UUID("1f06ed67-aa6e-4bbc-96d9-2f262b9202b5"),
+            org_unit_uuid=UUID("078e070b-7046-4b81-9228-0858be9b1bbb"),
             manager_uuid=UUID("a7d51c1d-bcb2-4650-80f3-3b2ab630bc5e"),
         ),
         OrgUnitManager(
@@ -311,6 +312,50 @@ async def test_get_unengaged_managers(
     managers_to_terminate = await get_unengaged_managers(query_dict)
 
     assert managers_to_terminate == expected
+
+
+@pytest.mark.parametrize(
+    "query_dict",
+    [
+        {"validities": []},
+        [{"validities": []}, {"validities": []}],
+    ],
+)
+async def test_get_unengaged_managers_invalid_query_dict_error(
+    query_dict: dict,
+) -> None:
+    """Test The input gets filtered correctly to find managers with no active engagement"""
+
+    with capture_logs() as cap_logs:
+        result = await get_unengaged_managers(query_dict)
+
+    assert not result
+    assert isinstance(result, list)
+
+    assert any("Invalid query_dict" in record["event"] for record in cap_logs)
+
+
+@pytest.mark.parametrize(
+    "query_dict",
+    [
+        {"validities": [{"uuid": uuid4(), "managers": [{"employee": []}]}]},
+        {
+            "validities": [
+                {"uuid": uuid4(), "managers": [{"employee": [{"engagements": []}]}]}
+            ]
+        },
+    ],
+)
+async def test_get_unengaged_managers_invalid_manager_warning(query_dict: dict) -> None:
+    """Test The input gets filtered correctly to find managers with no active engagement"""
+
+    with capture_logs() as cap_logs:
+        result = await get_unengaged_managers(query_dict)
+
+    assert not result
+    assert isinstance(result, list)
+
+    assert any("Skipping manager" in record["event"] for record in cap_logs)
 
 
 @pytest.mark.parametrize(

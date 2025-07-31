@@ -328,6 +328,12 @@ unengaged_managers_sample = [
                                     "engagements": [
                                         {
                                             "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                            "org_unit": [
+                                                {
+                                                    "name": "IT-Support_led-adm",
+                                                    "parent": {"name": "IT-Support"},
+                                                }
+                                            ],
                                             "validity": {
                                                 "from": "2019-02-20T00:00:00+01:00",
                                                 "to": None,
@@ -335,6 +341,12 @@ unengaged_managers_sample = [
                                         },
                                         {
                                             "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                            "org_unit": [
+                                                {
+                                                    "name": "IT-Support_led-adm",
+                                                    "parent": {"name": "IT-Support"},
+                                                }
+                                            ],
                                             "validity": {
                                                 "from": "2019-02-20T00:00:00+01:00",
                                                 "to": "2025-02-20T00:00:00+01:00",
@@ -342,6 +354,12 @@ unengaged_managers_sample = [
                                         },
                                         {
                                             "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa 5016
+                                            "org_unit": [
+                                                {
+                                                    "name": "IT-Support_led-adm",
+                                                    "parent": {"name": "IT-Support"},
+                                                }
+                                            ],
                                             "validity": {
                                                 "from": "2022-11-20T00:00:00+01:00",
                                                 "to": None,
@@ -393,6 +411,12 @@ unengaged_managers_sample = [
                                     "engagements": [
                                         {
                                             "org_unit_uuid": "f1c20ee2-ecbb-4b74-b91c-66ef9831c5cd",  # noqa 5016
+                                            "org_unit": [
+                                                {
+                                                    "name": "Viuf skole",
+                                                    "parent": {"name": "Skole og børn"},
+                                                }
+                                            ],
                                             "validity": {
                                                 "from": "2021-02-09T00:00:00+01:00",
                                                 "to": "2022-07-26T00:00:00+02:00",
@@ -444,6 +468,14 @@ engagement_samples = [
                                             "engagements": [
                                                 {
                                                     "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                                    "org_unit": [
+                                                        {
+                                                            "name": "IT-Support_led-adm",
+                                                            "parent": {
+                                                                "name": "IT-Support"
+                                                            },
+                                                        }
+                                                    ],
                                                     "validity": {
                                                         "from": "2019-02-20T00:00:00+01:00",
                                                         "to": None,
@@ -451,6 +483,14 @@ engagement_samples = [
                                                 },
                                                 {
                                                     "org_unit_uuid": "09c347ef-451f-5919-8d41-02cc989a6d8b",  # noqa 5016
+                                                    "org_unit": [
+                                                        {
+                                                            "name": "Park og Vej",
+                                                            "parent": {
+                                                                "name": "Teknik og Miljø"
+                                                            },
+                                                        }
+                                                    ],
                                                     "validity": {
                                                         "from": "2022-11-20T00:00:00+01:00",
                                                         "to": None,
@@ -467,6 +507,14 @@ engagement_samples = [
                                             "engagements": [
                                                 {
                                                     "org_unit_uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 5016
+                                                    "org_unit": [
+                                                        {
+                                                            "name": "IT-Support_led-adm",
+                                                            "parent": {
+                                                                "name": "IT-Support"
+                                                            },
+                                                        },
+                                                    ],
                                                     "validity": {
                                                         "from": "2021-02-09T00:00:00+01:00",
                                                         "to": "2022-07-26T00:00:00+02:00",
@@ -493,6 +541,14 @@ engagement_samples = [
                                             "engagements": [
                                                 {
                                                     "org_unit_uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa 5016
+                                                    "org_unit": [
+                                                        {
+                                                            "name": "Social og Sundhed_led-adm",
+                                                            "parent": {
+                                                                "name": "Social og Sundhed"
+                                                            },
+                                                        }
+                                                    ],
                                                     "validity": {
                                                         "from": "1979-04-21T00:00:00+01:00",
                                                         "to": None,
@@ -533,6 +589,14 @@ engagement_samples = [
                                             "engagements": [
                                                 {
                                                     "org_unit_uuid": "96a4715c-f4df-422f-a4b0-9dcc686753f7",  # noqa 5016
+                                                    "org_unit": [
+                                                        {
+                                                            "name": "Renovation",
+                                                            "parent": {
+                                                                "name": "Teknik og Miljø"
+                                                            },
+                                                        }
+                                                    ],
                                                     "validity": {
                                                         "from": "1987-12-05T00:00:00+01:00",
                                                         "to": None,

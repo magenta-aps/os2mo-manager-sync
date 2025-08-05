@@ -36,8 +36,8 @@ This section describes how the code logic operates when the application is trigg
    3. The manger roles `manager_level` is based on the org-unit level in which
       the manager role is assigned:
       ![Manager level](readme_images/manager_level.png)
-   4. If the parent org-unit has `_led-adm` in its name, the manager will also become
-      manager of this org-units parent org-unit (Notice: Manager level is based
+   4. If the parent org-unit name ends with `led-adm`, the manager will also become
+      manager of this org-unit's parent org-unit (Notice: Manager level is based
       on org-unit level from the highest ranking org-unit).
       ![led-adm](readme_images/_led-adm.png)
       In the above illustration, manager fetched from `_leder` unit becomes manager

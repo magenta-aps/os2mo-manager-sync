@@ -329,7 +329,7 @@ unengaged_managers_sample = [
                                         {
                                             "org_unit": [
                                                 {
-                                                    "name": "IT-Support_led-adm",
+                                                    "name": "IT-Support led-adm",
                                                     "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
                                                     "parent": {
                                                         "name": "IT-Support",
@@ -345,7 +345,7 @@ unengaged_managers_sample = [
                                         {
                                             "org_unit": [
                                                 {
-                                                    "name": "IT-Support_led-adm",
+                                                    "name": "IT-Support led-adm",
                                                     "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
                                                     "parent": {
                                                         "name": "IT-Support",
@@ -460,7 +460,7 @@ unengaged_managers_sample = [
                                         {
                                             "org_unit": [
                                                 {
-                                                    "name": "IT-Support_led-adm",
+                                                    "name": "IT-Support led-adm",
                                                     "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
                                                     "parent": {
                                                         "name": "IT-Support",
@@ -519,7 +519,7 @@ engagement_samples = [
                                                 {
                                                     "org_unit": [
                                                         {
-                                                            "name": "IT-Support_led-adm",
+                                                            "name": "IT-Support led-adm",
                                                             "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
                                                             "parent": {
                                                                 "name": "IT-Support",
@@ -560,7 +560,7 @@ engagement_samples = [
                                                 {
                                                     "org_unit": [
                                                         {
-                                                            "name": "IT-Support_led-adm",
+                                                            "name": "IT-Support led-adm",
                                                             "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
                                                             "parent": {
                                                                 "name": "IT-Support",
@@ -595,7 +595,7 @@ engagement_samples = [
                                                 {
                                                     "org_unit": [
                                                         {
-                                                            "name": "Social og Sundhed_led-adm",
+                                                            "name": "Social og Sundhed led-adm",
                                                             "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa 501
                                                             "parent": {
                                                                 "name": "Social og Sundhed",
@@ -1425,7 +1425,7 @@ get_create_update_manager_led_adm_sample = (
         has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-            name="Skoler_led-adm",
+            name="Skoler led-adm",
             parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
             org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
         ),

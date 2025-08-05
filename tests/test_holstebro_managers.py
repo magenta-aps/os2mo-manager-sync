@@ -719,7 +719,7 @@ async def test_create_manager_object(
 async def test_get_manager_level(gql_client: AsyncMock) -> None:
     """
     Test get_manager_level in the case where the OU is a "normal"
-    unit, i.e. a unit where the name is not suffixed with _led-adm
+    unit, i.e. a unit where the name is not suffixed with led-adm
     """
 
     # Arrange
@@ -748,7 +748,7 @@ async def test_get_manager_level(gql_client: AsyncMock) -> None:
 async def test_get_manager_level_led_adm() -> None:
     """
     Test get_manager_level in the case where the OU is a "led-adm"
-    unit, i.e. a unit where the name is suffixed with _led-adm
+    unit, i.e. a unit where the name is suffixed with "led-adm"
     """
 
     # Arrange
@@ -758,7 +758,7 @@ async def test_get_manager_level_led_adm() -> None:
         has_children=False,
         parent=Parent(
             uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-            name="SomeUnit_led-adm",
+            name="SomeUnit led-adm",
             parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
             org_unit_level_uuid=UUID("0263522a-2c1e-9c80-1880-92c1b97cfead"),
         ),

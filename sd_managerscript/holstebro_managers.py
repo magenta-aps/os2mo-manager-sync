@@ -21,9 +21,9 @@ from .models import OrgUnitManager
 from .models import OrgUnitManagers
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
+from .queries import QUERY_LEDER_ORG_UNITS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
-from .queries import QUERY_ORG_UNITS
 from .queries import QUERY_ROOT_MANAGER_ENGAGEMENTS
 from .queries import UPDATE_MANAGER
 from .terminate import terminate_manager
@@ -219,27 +219,18 @@ async def check_manager_engagement(
 
 
 async def get_manager_org_units(
-    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, recursive: bool = True
+    gql_client: PersistentGraphQLClient,
 ) -> list[OrgUnitManagers]:
     """
-    Recursive function, traverse through all org_units and return '_leder' org-units
+    Function for getting all org_units that ends with `_leder`
 
     Args:
         Graphql client
-        org_unit_uuid: UUID
-        recursive: If true, all manager OUs will be fetched recursively. If false,
-          only the '_leder' OUs directly below the org_unit_uuid will be fetched.
     Returns:
         managers: list of '_leder' OrgUnitManagers
 
     """
-
-    # TODO: This whole recursive thing, could possibly be simplyfied by just
-    # fetching all units (potentially with pagination).
-    # It seems redundant, compared to the state GraphQL is in now.
-    variables = {"uuid": str(org_unit_uuid)}
-    data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
-    logger.debug("Org-units returned from query", response=data)
+    data = await query_org_unit(gql_client, QUERY_LEDER_ORG_UNITS, {})
 
     # Select _leder units that are not prefixed with 'Ø_'
     leder_units = [
@@ -248,17 +239,6 @@ async def get_manager_org_units(
         if ou.name.lower().strip().endswith("_leder")
         and not ou.name.strip().startswith("Ø_")
     ]
-
-    if recursive:
-        child_org_units = [ou for ou in data if ou.has_children]
-        recursive_results = await asyncio.gather(
-            *[
-                get_manager_org_units(gql_client, ou.uuid, recursive=True)
-                for ou in child_org_units
-            ]
-        )
-        for result in recursive_results:
-            leder_units.extend(result)
 
     return leder_units
 
@@ -481,9 +461,7 @@ async def update_mo_managers(  # pragma: no cover
         )
 
     logger.info("Getting manager org units (units ending in _leder)...")
-    manager_org_units = await get_manager_org_units(
-        gql_client, org_unit_uuid, recursive=recursive
-    )
+    manager_org_units = await get_manager_org_units(gql_client)
     logger.debug("Manager org units", manager_org_units=manager_org_units)
 
     logger.info("Filter managers org units")

@@ -80,101 +80,8 @@ def gql_client() -> Generator[AsyncMock, None, None]:
     yield AsyncMock()
 
 
-# FIX: Not sure how to test with recursive=True and mocks. It seems to run infinitely
-
-# @patch("sd_managerscript.holstebro_managers.query_org_unit")
-# async def test_get_manager_org_units(mock_query_org_unit: AsyncMock) -> None:
-#     """Test the "get_manager_org_units" method returns correct '_leder' org-units."""
-#
-#     uuid = UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c")
-#     sample_data = get_sample_data()
-#     mock_query_org_unit.return_value = sample_data
-#
-#     returned_managers = await get_manager_org_units(
-#         mock_query_org_unit, org_unit_uuid=uuid
-#     )
-#
-#     assert returned_managers == [
-#         OrgUnitManagers(
-#             uuid=UUID("72d8e92f-9481-43af-8cb0-a83823c9f35e"),
-#             name="Almind skole_leder",
-#             has_children=False,
-#             associations=[
-#                 Association(
-#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
-#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                     validity=Validity(
-#                         from_date=datetime(
-#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
-#                         ),
-#                         to_date=None,
-#                     ),
-#                 )
-#             ],
-#             parent=Parent(
-#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-#                 name="Skoler",
-#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
-#             ),
-#         ),
-#         OrgUnitManagers(
-#             uuid=UUID("60370b40-a143-40c5-aaa1-638b3b74d119"),
-#             name="Social Indsats_LEDER",
-#             has_children=True,
-#             associations=[
-#                 Association(
-#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
-#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                     validity=Validity(
-#                         from_date=datetime(
-#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
-#                         ),
-#                         to_date=None,
-#                     ),
-#                 )
-#             ],
-#             parent=Parent(
-#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-#                 name="Skoler",
-#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
-#             ),
-#         ),
-#         OrgUnitManagers(
-#             uuid=UUID("23f3cebf-2625-564a-bcfc-31272eb9bce2"),
-#             name="Social og sundhed_leder",
-#             has_children=False,
-#             associations=[
-#                 Association(
-#                     uuid=UUID("ab1adf81-1c56-46ce-bd81-8cc536212c12"),
-#                     org_unit_uuid=UUID("13f3cebf-2625-564a-bcfc-31272eb9bce2"),
-#                     employee_uuid=UUID("8315443f-a918-4eea-9605-150472418101"),
-#                     association_type_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                     validity=Validity(
-#                         from_date=datetime(
-#                             2022, 8, 1, 0, 0, tzinfo=tzoffset(None, 7200)
-#                         ),
-#                         to_date=None,
-#                     ),
-#                 )
-#             ],
-#             parent=Parent(
-#                 uuid=UUID("9a2bbe63-b7b4-4b3d-9b47-9d7dd391b42c"),
-#                 name="Skoler",
-#                 parent_uuid=UUID("2665d8e0-435b-5bb6-a550-f275692984ef"),
-#                 org_unit_level_uuid=UUID("09c347ef-451f-5919-8d41-02cc989a6d8b"),
-#             ),
-#         ),
-#     ]
-
-
 @patch("sd_managerscript.holstebro_managers.query_org_unit")
-async def test_get_manager_org_units_recursion_disabled(
+async def test_get_manager_org_units(
     mock_query_graphql: AsyncMock,
 ) -> None:
     parent_uuid = uuid4()
@@ -218,9 +125,7 @@ async def test_get_manager_org_units_recursion_disabled(
         ),
     ]
 
-    manager_org_units = await get_manager_org_units(
-        mock_query_graphql, parent_uuid, False
-    )
+    manager_org_units = await get_manager_org_units(mock_query_graphql)
 
     # Assert
     assert manager_org_units == [

@@ -69,6 +69,46 @@ def is_led_adm_unit(org_unit: dict) -> bool:
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
     Return OrgUnitManager if the manager has no active engagements in the given org-unit.
+
+    Example of query_dict:
+    {
+        "objects": [
+            {
+                "validities: [{
+                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                    "has_children": True,
+                    "managers": [
+                        {
+                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                            "employee": [
+                                {
+                                    "engagements": [
+                                        {
+                                            "org_unit": [
+                                                {
+                                                    "name": "IT-Support led-adm",
+                                                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
+                                                    "parent": {
+                                                        "name": "IT-Support",
+                                                        "uuid": "078e070b-7046-4b81-9228-0858be9b1bbb",  # noqa 501
+                                                    },
+                                                }
+                                            ],
+                                            "validity": {
+                                                "from": "2022-11-20T00:00:00+01:00",
+                                                "to": None,
+                                            },
+                                        },
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }]
+            }
+        ],
+    }
+
     """
     unengaged_managers: list[OrgUnitManager] = []
 

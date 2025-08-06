@@ -117,35 +117,36 @@ async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitMana
             employee = one(manager.get("employee", []))
             engagements = employee.get("engagements", [])
 
-            # Check for active engagement in this org_unit
-            has_active_engagement = any(
-                is_engagement_active(e)
-                and one(e["org_unit"]).get("uuid") == org_unit_uuid
-                for e in engagements
-            )
-            if has_active_engagement:
-                continue
-
-            # Check for active engagement in a `led-adm` unit that's a child of this org_unit
-            has_active_led_adm_engagement = any(
-                is_engagement_active(e)
-                and is_led_adm_unit(one(e["org_unit"]))
-                and one(e["org_unit"]).get("parent", {}).get("uuid") == org_unit_uuid
-                for e in engagements
-            )
-            if has_active_led_adm_engagement:
-                continue
-
-            unengaged_managers.append(
-                OrgUnitManager(
-                    org_unit_uuid=UUID(org_unit_uuid),
-                    manager_uuid=UUID(manager_uuid),
-                )
-            )
         except Exception as e:
             logger.warning(
                 f"Skipping manager: {query_dict}. Exception: {e}", exc_info=True
             )
+            continue
+
+        # Check for active engagement in this org_unit
+        has_active_engagement = any(
+            is_engagement_active(e) and one(e["org_unit"]).get("uuid") == org_unit_uuid
+            for e in engagements
+        )
+        if has_active_engagement:
+            continue
+
+        # Check for active engagement in a `led-adm` unit that's a child of this org_unit
+        has_active_led_adm_engagement = any(
+            is_engagement_active(e)
+            and is_led_adm_unit(one(e["org_unit"]))
+            and one(e["org_unit"]).get("parent", {}).get("uuid") == org_unit_uuid
+            for e in engagements
+        )
+        if has_active_led_adm_engagement:
+            continue
+
+        unengaged_managers.append(
+            OrgUnitManager(
+                org_unit_uuid=UUID(org_unit_uuid),
+                manager_uuid=UUID(manager_uuid),
+            )
+        )
 
     return unengaged_managers
 

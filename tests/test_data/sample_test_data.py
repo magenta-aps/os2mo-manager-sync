@@ -522,7 +522,7 @@ engagement_samples = [
                                                             "name": "IT-Support led-adm",
                                                             "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
                                                             "parent": {
-                                                                "name": "IT-Support",
+                                                                "name": "Center for IT-Support",
                                                                 "uuid": "078e070b-7046-4b81-9228-0858be9b1bbb",  # noqa 501
                                                             },
                                                         }
@@ -598,7 +598,7 @@ engagement_samples = [
                                                             "name": "Social og Sundhed led-adm",
                                                             "uuid": "25e39a21-caef-4e96-ac90-7cc27173082e",  # noqa 501
                                                             "parent": {
-                                                                "name": "Social og Sundhed",
+                                                                "name": "Center for Social og Sundhed",  # noqa 501
                                                                 "uuid": "86b35855-2b76-4520-b63a-f4b5910f7fd2",  # noqa 501
                                                             },
                                                         }

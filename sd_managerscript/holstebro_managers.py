@@ -52,23 +52,15 @@ def is_engagement_active(engagement: dict[str, Any]) -> bool:
 
 def is_led_adm_unit(org_unit: dict) -> bool:
     """
-    Returns True if the org unit's name ends with 'led-adm' and its parent's
-    name matches the base name (without 'led-adm').
+    Returns True if the org unit's name ends with 'led-adm'
     """
     name = cast(str, org_unit.get("name", "")).lower().strip()
-    if not name.endswith("led-adm"):
-        return False
-
-    parent = org_unit.get("parent", {})
-    parent_name = cast(str, parent.get("name", "")).lower().strip()
-
-    base_name = name.removesuffix("led-adm").strip()
-    return parent_name == base_name
+    return name.endswith("led-adm")
 
 
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
-    Return OrgUnitManager if the manager has no active engagements in the given org-unit.
+    Return OrgUnitManager if the manager has no active engagements in the given org-unit or led-adm child.
 
     Example of query_dict:
     {

@@ -264,9 +264,9 @@ def create_manager_ou(input: dict[str, str], gql_client: GraphQLClient) -> str:
 
 
 def create_led_adm_org_units(gql_client: GraphQLClient, input: tuple) -> None:
-    """Update selected org-units name with '_led-adm'"""
+    """Update selected org-units name with 'led-adm'"""
 
-    name = input[0] + "_led-adm"
+    name = input[0] + "led-adm"
     uuid = input[1]  # UUID
     org_unit_type = "9d2ac723-d5e5-4e7f-9c7f-b207bd223bc2"
     from_date = "2022-07-15"

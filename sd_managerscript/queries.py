@@ -165,7 +165,14 @@ QUERY_ROOT_MANAGER_ENGAGEMENTS = gql(
                             uuid
                             employee {
                                 engagements {
-                                    org_unit_uuid
+                                    org_unit {
+                                        name
+                                        uuid
+                                        parent {
+                                            name
+                                            uuid
+                                        }
+                                    }
                                     validity {
                                         from
                                         to
@@ -192,7 +199,14 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
                             uuid
                             employee {
                                 engagements {
-                                    org_unit_uuid
+                                    org_unit {
+                                        name
+                                        uuid
+                                        parent {
+                                            name
+                                            uuid
+                                        }
+                                    }
                                     validity {
                                         from
                                         to
@@ -205,4 +219,36 @@ QUERY_MANAGER_ENGAGEMENTS = gql(
             }
         }
     """
+)
+
+QUERY_LEDER_ORG_UNITS = gql(
+    """
+        query {
+            org_units(filter: { query: "_leder" }) {
+                objects {
+                    validities {
+                        uuid
+                        name
+                        has_children
+                        associations {
+                            uuid
+                            org_unit_uuid
+                            employee_uuid
+                            association_type_uuid
+                            validity {
+                                from
+                                to
+                            }
+                        }
+                        parent {
+                            uuid
+                            name
+                            parent_uuid
+                            org_unit_level_uuid
+                        }
+                    }
+                }
+            }
+        }
+"""
 )

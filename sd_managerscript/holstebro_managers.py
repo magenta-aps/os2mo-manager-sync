@@ -3,6 +3,7 @@
 import asyncio
 from datetime import datetime
 from typing import Any
+from typing import cast
 from uuid import UUID
 
 import structlog
@@ -20,9 +21,9 @@ from .models import OrgUnitManager
 from .models import OrgUnitManagers
 from .queries import CREATE_MANAGER
 from .queries import CURRENT_MANAGER
+from .queries import QUERY_LEDER_ORG_UNITS
 from .queries import QUERY_MANAGER_ENGAGEMENTS
 from .queries import QUERY_ORG_UNIT_LEVEL
-from .queries import QUERY_ORG_UNITS
 from .queries import QUERY_ROOT_MANAGER_ENGAGEMENTS
 from .queries import UPDATE_MANAGER
 from .terminate import terminate_manager
@@ -40,10 +41,8 @@ DEFAULT_TZ = zoneinfo.ZoneInfo("Europe/Copenhagen")
 logger = structlog.get_logger()
 
 
-def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool:
-    """Return True if engagement is in the org_unit and still active."""
-    if engagement["org_unit_uuid"] != org_unit_uuid:
-        return False
+def is_engagement_active(engagement: dict[str, Any]) -> bool:
+    """Return True if engagement is active."""
 
     to_date = engagement["validity"]["to"]
     if to_date is None:
@@ -51,34 +50,103 @@ def is_engagement_active(engagement: dict[str, Any], org_unit_uuid: str) -> bool
     return datetime.fromisoformat(to_date) > datetime.now(tz=DEFAULT_TZ)
 
 
+def is_led_adm_unit(org_unit: dict) -> bool:
+    """
+    Returns True if the org unit's name ends with 'led-adm'
+    """
+    name = cast(str, org_unit.get("name", "")).lower().strip()
+    return name.endswith("led-adm")
+
+
 async def get_unengaged_managers(query_dict: dict[str, Any]) -> list[OrgUnitManager]:
     """
-    Return OrgUnitManager if the manager has no active engagements in the given org-unit.
+    Return OrgUnitManager if the manager has no active engagements in the given org-unit or led-adm child.
+
+    Example of query_dict:
+    {
+        "objects": [
+            {
+                "validities: [{
+                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",
+                    "has_children": True,
+                    "managers": [
+                        {
+                            "uuid": "5a988dee-109a-4353-95f2-fb414ea8d605",
+                            "employee": [
+                                {
+                                    "engagements": [
+                                        {
+                                            "org_unit": [
+                                                {
+                                                    "name": "IT-Support led-adm",
+                                                    "uuid": "1f06ed67-aa6e-4bbc-96d9-2f262b9202b5",  # noqa 501
+                                                    "parent": {
+                                                        "name": "IT-Support",
+                                                        "uuid": "078e070b-7046-4b81-9228-0858be9b1bbb",  # noqa 501
+                                                    },
+                                                }
+                                            ],
+                                            "validity": {
+                                                "from": "2022-11-20T00:00:00+01:00",
+                                                "to": None,
+                                            },
+                                        },
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }]
+            }
+        ],
+    }
+
     """
     unengaged_managers: list[OrgUnitManager] = []
 
     try:
-        validity = one(query_dict["validities"])
-        org_unit_uuid = validity["uuid"]
-    except Exception:
-        logger.error("Invalid query_dict: %s", query_dict, exc_info=True)
+        org_unit = one(query_dict["validities"])
+    except Exception as e:
+        logger.error(f"Invalid query_dict: {query_dict}. Exception: {e}", exc_info=True)
         return unengaged_managers
 
-    for manager in validity.get("managers", []):
+    org_unit_uuid = org_unit.get("uuid")
+    for manager in org_unit.get("managers", []):
         try:
             manager_uuid = manager["uuid"]
             employee = one(manager.get("employee", []))
             engagements = employee.get("engagements", [])
 
-            if not any(is_engagement_active(e, org_unit_uuid) for e in engagements):
-                unengaged_managers.append(
-                    OrgUnitManager(
-                        org_unit_uuid=UUID(org_unit_uuid),
-                        manager_uuid=UUID(manager_uuid),
-                    )
-                )
-        except Exception:
-            logger.warning("Skipping manager: %s", manager, exc_info=True)
+        except Exception as e:
+            logger.warning(
+                f"Skipping manager: {query_dict}. Exception: {e}", exc_info=True
+            )
+            continue
+
+        # Check for active engagement in this org_unit
+        has_active_engagement = any(
+            is_engagement_active(e) and one(e["org_unit"]).get("uuid") == org_unit_uuid
+            for e in engagements
+        )
+        if has_active_engagement:
+            continue
+
+        # Check for active engagement in a `led-adm` unit that's a child of this org_unit
+        has_active_led_adm_engagement = any(
+            is_engagement_active(e)
+            and is_led_adm_unit(one(e["org_unit"]))
+            and one(e["org_unit"]).get("parent", {}).get("uuid") == org_unit_uuid
+            for e in engagements
+        )
+        if has_active_led_adm_engagement:
+            continue
+
+        unengaged_managers.append(
+            OrgUnitManager(
+                org_unit_uuid=UUID(org_unit_uuid),
+                manager_uuid=UUID(manager_uuid),
+            )
+        )
 
     return unengaged_managers
 
@@ -184,27 +252,18 @@ async def check_manager_engagement(
 
 
 async def get_manager_org_units(
-    gql_client: PersistentGraphQLClient, org_unit_uuid: UUID, recursive: bool = True
+    gql_client: PersistentGraphQLClient,
 ) -> list[OrgUnitManagers]:
     """
-    Recursive function, traverse through all org_units and return '_leder' org-units
+    Function for getting all org_units that ends with `_leder`
 
     Args:
         Graphql client
-        org_unit_uuid: UUID
-        recursive: If true, all manager OUs will be fetched recursively. If false,
-          only the '_leder' OUs directly below the org_unit_uuid will be fetched.
     Returns:
         managers: list of '_leder' OrgUnitManagers
 
     """
-
-    # TODO: This whole recursive thing, could possibly be simplyfied by just
-    # fetching all units (potentially with pagination).
-    # It seems redundant, compared to the state GraphQL is in now.
-    variables = {"uuid": str(org_unit_uuid)}
-    data = await query_org_unit(gql_client, QUERY_ORG_UNITS, variables)
-    logger.debug("Org-units returned from query", response=data)
+    data = await query_org_unit(gql_client, QUERY_LEDER_ORG_UNITS, {})
 
     # Select _leder units that are not prefixed with 'Ø_'
     leder_units = [
@@ -213,17 +272,6 @@ async def get_manager_org_units(
         if ou.name.lower().strip().endswith("_leder")
         and not ou.name.strip().startswith("Ø_")
     ]
-
-    if recursive:
-        child_org_units = [ou for ou in data if ou.has_children]
-        recursive_results = await asyncio.gather(
-            *[
-                get_manager_org_units(gql_client, ou.uuid, recursive=True)
-                for ou in child_org_units
-            ]
-        )
-        for result in recursive_results:
-            leder_units.extend(result)
 
     return leder_units
 
@@ -423,7 +471,8 @@ async def create_update_manager(
             await update_manager(gql_client, org_unit.parent.parent_uuid, manager)
 
 
-async def update_mo_managers(
+# This function only delegates to other tested functions — no internal logic.
+async def update_mo_managers(  # pragma: no cover
     gql_client: PersistentGraphQLClient,
     org_unit_uuid: UUID,
     root_uuid: UUID,
@@ -445,9 +494,7 @@ async def update_mo_managers(
         )
 
     logger.info("Getting manager org units (units ending in _leder)...")
-    manager_org_units = await get_manager_org_units(
-        gql_client, org_unit_uuid, recursive=recursive
-    )
+    manager_org_units = await get_manager_org_units(gql_client)
     logger.debug("Manager org units", manager_org_units=manager_org_units)
 
     logger.info("Filter managers org units")
